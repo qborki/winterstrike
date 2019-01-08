@@ -3,8 +3,7 @@ set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Choose the type of build (by default 
 cmake_minimum_required(VERSION 3.7)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_HOME_DIRECTORY}/cmake ${CMAKE_HOME_DIRECTORY}/cmake/sdl)
 
-project(winterstrike)
-set(winterstrike_VERSION 0.2.0)
+project(winterstrike VERSION 0.2.0)
 
 set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS} -s")
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-longc -fno-rtti -O3")
