@@ -1,5 +1,5 @@
 /* Winter-Strike Game
- * Copyright (C) 2019 Kumok Boris
+ * Copyright (C) 2019 Boris Kumok
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,13 +39,13 @@ World::~World() {
  * Consistent noise generator for coordinates
  */
 static int hash (int a1, int a2, int a3) {
-	int seed = (( a1 + a2) * (a1 + a2 + 1)) / 2 + a2;
-	seed = (( seed + a3) * (seed + a3 + 1)) / 2 + a3;
-	
+    int seed = (( a1 + a2) * (a1 + a2 + 1)) / 2 + a2;
+    seed = (( seed + a3) * (seed + a3 + 1)) / 2 + a3;
+
     seed = ((seed >> 16) ^ seed) * 0x45d9f3b;
     seed = ((seed >> 16) ^ seed) * 0x45d9f3b;
     seed = (seed >> 16) ^ seed;
-    return seed;	
+    return seed;
 }
 
 /**
@@ -102,8 +102,7 @@ World::Tile& World::getTile(const vec2i& pos) {
     Chunk& chunk = m_chunks[chunk_pos];
 
     if (chunk.m_atime == 0) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_TEST, "Generate chunk: %d %d %d %d", chunk_pos.x, chunk_pos.y, chunk_pos.x + Chunk::SIZE, chunk_pos.y + Chunk::SIZE);
-        // std::cout << "Generate chunk: " << chunk_pos.x << " " << chunk_pos.y << " " << chunk_pos.x + Chunk::SIZE << " " << chunk_pos.y + Chunk::SIZE << std::endl;
+        SDL_LogDebug(SDL_LOG_CATEGORY_TEST, "Create tiles: [%d,%d]:[%d,%d]", chunk_pos.x, chunk_pos.y, chunk_pos.x + Chunk::SIZE, chunk_pos.y + Chunk::SIZE);
 
         for (int x = 0; x < Chunk::SIZE; ++x) {
             for (int y = 0; y < Chunk::SIZE; ++y) {
@@ -242,7 +241,7 @@ void World::update(float dt) {
                 if (!solid && !collider) {
                     continue;
                 }
-                
+
                 vec2f delta = object->getPosition() - other->getPosition();
 
                 if (delta.length() < 0.2) {

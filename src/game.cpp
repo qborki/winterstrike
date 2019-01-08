@@ -1,5 +1,5 @@
 /* Winter-Strike Game
- * Copyright (C) 2019 Kumok Boris
+ * Copyright (C) 2019 Boris Kumok
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -197,7 +197,7 @@ void Game::run() {
             else if (ev.type == SDL_WINDOWEVENT) {
                 switch (ev.window.event) {
                     case SDL_WINDOWEVENT_RESIZED:
-                        float k = fmin(800.0 / ev.window.data1, 600.0 / ev.window.data2);
+                        float k = fmin(1.0, fmin(800.0 / ev.window.data1, 600.0 / ev.window.data2));
                         int w = int(ev.window.data1 * k);
                         int h = int(ev.window.data2 * k);
                         SDL_RenderSetLogicalSize(m_renderer, w, h);
@@ -258,7 +258,6 @@ Game::ObjectCtor Game::getFactory(const std::string& className) const {
  */
 bool Game::setFactory(const std::string& className, ObjectCtor constructor) {
     SDL_LogDebug(SDL_LOG_CATEGORY_TEST, "Register: %s", className.c_str());
-    // std::cout << "Register: " << className << std::endl;
     m_factories[className] = constructor;
     return true;;
 }
@@ -271,7 +270,6 @@ SDL_Texture* Game::getTexture(const std::string& fileName) {
 
     if (texture == nullptr) {
         SDL_LogDebug(SDL_LOG_CATEGORY_TEST, "Load: %s", fileName.c_str());
-        // std::cout << "Load: " << fileName << std::endl;
         if ((texture = IMG_LoadTexture(m_renderer, getDataFile("gfx/" + fileName).c_str())) == nullptr) {
             throw std::runtime_error(IMG_GetError());
         }
@@ -289,7 +287,6 @@ TTF_Font* Game::getFont(const std::string& fileName, int ptsize) {
 
     if (font == nullptr) {
         SDL_LogDebug(SDL_LOG_CATEGORY_TEST, "Load: %s", key.c_str());
-        // std::cout << "Load: " << key << std::endl;
         if ((font = TTF_OpenFont(getDataFile("gfx/" + fileName).c_str(), ptsize)) == nullptr) {
             throw std::runtime_error(TTF_GetError());
         }
@@ -306,7 +303,6 @@ Mix_Chunk* Game::getSound(const std::string& fileName) {
 
     if (chunk == nullptr) {
         SDL_LogDebug(SDL_LOG_CATEGORY_TEST, "Load: %s", fileName.c_str());
-        // std::cout << "Load: " << fileName << std::endl;
         if ((chunk = Mix_LoadWAV(getDataFile("sfx/" + fileName).c_str())) == nullptr) {
             throw std::runtime_error(Mix_GetError());
         }
@@ -323,7 +319,6 @@ Mix_Music* Game::getMusic(const std::string& fileName) {
 
     if (music == nullptr) {
         SDL_LogDebug(SDL_LOG_CATEGORY_TEST, "Load: %s", fileName.c_str());
-        // std::cout << "Load: " << fileName << std::endl;
         if ((music = Mix_LoadMUS(getDataFile("sfx/" + fileName).c_str())) == nullptr) {
             throw std::runtime_error(Mix_GetError());
         }

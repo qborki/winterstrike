@@ -1,5 +1,5 @@
 /* Winter-Strike Game
- * Copyright (C) 2019 Kumok Boris
+ * Copyright (C) 2019 Boris Kumok
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -116,12 +116,12 @@ void Sprite::createFromText(SDL_Renderer* renderer, const std::string& text, con
     destroy();
 
     if ((surface = TTF_RenderText_Blended(font, text.c_str(), color)) == nullptr) {
-		throw std::runtime_error(TTF_GetError());
+        throw std::runtime_error(TTF_GetError());
     }
     else {
         if ((m_texture = SDL_CreateTextureFromSurface(renderer, surface)) == nullptr) {
-			SDL_FreeSurface(surface);
-			throw std::runtime_error(SDL_GetError());
+            SDL_FreeSurface(surface);
+            throw std::runtime_error(SDL_GetError());
         }
         else {
             m_size = vec2i(surface->w, surface->h);

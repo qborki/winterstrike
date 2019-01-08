@@ -1,5 +1,5 @@
 /* Winter-Strike Game
- * Copyright (C) 2019 Kumok Boris
+ * Copyright (C) 2019 Boris Kumok
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,12 +35,10 @@ Object::Object(const std::string& classname) :
     m_solid(true),
     m_collider(true) {
 
-    // std::cout << "Create " << m_classname << " (object #" << m_object_id << ")" << std::endl;
     SDL_LogDebug(SDL_LOG_CATEGORY_TEST, "Create %s  (object #%d)", m_classname.c_str(), m_object_id);
 }
 
 Object::~Object() {
-    // std::cout << "Delete " << m_classname << " (object #" << m_object_id << ")" << std::endl;
     SDL_LogDebug(SDL_LOG_CATEGORY_TEST, "Delete %s  (object #%d)", m_classname.c_str(), m_object_id);
 }
 
@@ -96,21 +94,21 @@ void Object::buildPathTo(const vec2f& pos) {
     m_queue = Node::PrioQ();
 
     Node* cur = &m_nodes[start];
-	cur->idx = start;
-	cur->parent = nullptr;
-	cur->actual = 0;
-	cur->heuristic = 99999;
+    cur->idx = start;
+    cur->parent = nullptr;
+    cur->actual = 0;
+    cur->heuristic = 99999;
 
-	m_queue.push(cur);
+    m_queue.push(cur);
 
-	while (!m_queue.empty() && m_queue.size() < 50) {
-		cur = m_queue.top();
-		if (cur->idx == goal) {
-			break;
-		}
-		m_queue.pop();
+    while (!m_queue.empty() && m_queue.size() < 50) {
+        cur = m_queue.top();
+        if (cur->idx == goal) {
+            break;
+        }
+        m_queue.pop();
 
-		for (int i = 0; i < 8; ++i) {
+        for (int i = 0; i < 8; ++i) {
             vec2i idx = cur->idx + steps[i];
 
             if (m_world->isPassable(idx)) {
@@ -126,8 +124,8 @@ void Object::buildPathTo(const vec2f& pos) {
                     m_queue.push(next);
                 }
             }
-		}
-	}
+        }
+    }
 
     vec2f last;
 

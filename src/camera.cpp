@@ -1,5 +1,5 @@
 /* Winter-Strike Game
- * Copyright (C) 2019 Kumok Boris
+ * Copyright (C) 2019 Boris Kumok
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ const vec2i Camera::getSize() const {
 
 const vec2i Camera::worldToScreen(const vec2f& pos) const {
     vec2f v = (pos - m_pos) * 128;
-    
+
     return vec2i(round((v.x - v.y) / 2), round((v.x + v.y) / 4)) + m_size / 2;
 }
 
