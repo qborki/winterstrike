@@ -18,9 +18,7 @@
 #define _OBJECT_H
 
 #include <string>
-#include <list>
-#include <queue>
-#include <map>
+#include <vector>
 #include "vec.h"
 
 class World;
@@ -88,8 +86,6 @@ public:
         m_z = z;
     }
 
-    void buildPathTo(const vec2f& pos);
-
     // events
     virtual void onCollision(Object* other);
     virtual void onHit(Object* other, int hp);
@@ -109,25 +105,5 @@ protected:
     bool   m_collider; // object may collide with other objects
     int    m_object_id;
     int    m_owner_id;
-
-    // AStar pathfinding
-    struct Node {
-        struct Compare {
-            inline const bool operator()(const Node* n1, const Node* n2) const {
-                return n1->actual + n1->heuristic > n2->actual + n2->heuristic;
-            }
-        };
-        using PrioQ = std::priority_queue<Node*, std::vector<Node*>, Compare>;
-
-        Node(): actual(99999) {}
-        vec2i idx;
-        Node* parent;
-        float actual;
-        float heuristic;
-    };
-
-    std::map<vec2i, Node> m_nodes;
-    Node::PrioQ m_queue;
-    std::list<vec2f> m_path;
 };
 #endif

@@ -16,6 +16,7 @@
  */
 #include <stdexcept>
 #include <SDL.h>
+#include <SDL_mixer.h>
 #include "game.h"
 #include "sprite.h"
 #include "object.h"
@@ -63,6 +64,10 @@ public:
             m_sprite = &s_explode;
             m_solid = false;
             m_collider = false;
+
+            if (Mix_PlayChannel(-1, Game::get().getSound("hit.ogg"), 0) < 0) {
+                throw std::runtime_error(Mix_GetError());
+            }
             if (other) {
                 other->onHit(this, 25);
             }

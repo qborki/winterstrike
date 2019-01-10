@@ -26,7 +26,7 @@ void Label::setText(const std::string& text) {
     m_sprite.destroy();
 }
 
-void Label::render(SDL_Renderer* renderer, const vec2i& pos) {
+void Label::render(SDL_Renderer* renderer, Camera*, const vec2i& pos) {
     if (!m_sprite.exists()) {
         m_sprite.createFromText(renderer, m_text, "LinBiolinum_Rah.ttf", 24, 64, 128, 64);
     }

@@ -23,7 +23,7 @@ class Sprite;
 
 class Character: public Object {
 public:
-    Character();
+    Character(bool ai);
 
     void render(SDL_Renderer* renderer, const vec2i& pos);
     void update(float dt);
@@ -32,6 +32,7 @@ public:
     void lookAt(const vec2f& pos);
     void throwAt(const vec2f& pos);
 
+    void onCollision(Object* other);
     void onHit(Object* other, int hp);
 private:
     void setSprite(Sprite* );
@@ -39,5 +40,8 @@ private:
     Sprite* m_sprite;
     float m_frame;
     int m_hp;
+    bool m_ai;
+
+    std::vector<vec2f> m_path;
 };
 #endif

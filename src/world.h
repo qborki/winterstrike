@@ -37,6 +37,11 @@ public:
 
     bool isPassable(const vec2i& pos);
 
+    std::vector<Object*> getObjectsInRadius(const vec2f& pos, float radius);
+    std::vector<vec2f> buildPath(const vec2f& from, const vec2f& goal);
+    bool checkVisible(const vec2f& origin, const vec2f& target);
+
+
     void renderMarker(SDL_Renderer*, Camera*, const vec2f& pos, int type);
 private:
     std::vector<Object*> m_objects;
