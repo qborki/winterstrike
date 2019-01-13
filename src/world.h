@@ -42,7 +42,9 @@ public:
     bool checkVisible(const vec2f& origin, const vec2f& target);
 
 
-    void renderMarker(SDL_Renderer*, Camera*, const vec2f& pos, int type);
+    void renderMarker(SDL_Renderer*, Camera*, const vec2f& pos, unsigned rgba);
+
+    vec2f m_cursor;
 private:
     std::vector<Object*> m_objects;
 

@@ -67,7 +67,7 @@ void Character::update(float dt) {
 
     // update character position
     if (m_sprite == &s_walk) {
-        m_pos += m_dir * 2 * dt;
+        m_pos += m_dir * 4 * dt;
 
         // check next waypoint
         if (!m_path.empty() && (m_path.back() - m_pos).length() < .1) {
@@ -83,12 +83,12 @@ void Character::update(float dt) {
     }
 
     // idle AIs might do something
-    if (m_ai && m_sprite == &s_idle && std::rand() < RAND_MAX / 128) {
+    if (m_ai && m_sprite == &s_idle && std::rand() < RAND_MAX / 64) {
         bool attack = false;
 
         // attack someone
         if (std::rand() % 2) {
-            std::vector<Object*> objects = m_world->getObjectsInRadius(m_pos, 5);
+            std::vector<Object*> objects = m_world->getObjectsInRadius(m_pos, 16);
             std::random_shuffle(objects.begin(), objects.end());
 
             // find someone we can attack
@@ -103,10 +103,23 @@ void Character::update(float dt) {
                 }
             }
         }
-        // walk
+
+        // or try to move closer
         if (!attack) {
+            std::vector<Object*> objects = m_world->getObjectsInRadius(m_pos, 64);
+            std::random_shuffle(objects.begin(), objects.end());
+            Object* object = this;
+
+            for (auto other : objects) {
+                if (other != this && other->getClassname() == "Character") {
+                    object = other;
+                    break;
+                }
+            }
+
+            // find open spot
             for (int i = 0; i < 10; i++) {
-                vec2f dst = m_pos + vec2f(std::rand() % 6 - 3, std::rand() % 6 - 3);
+                vec2f dst = object->getPosition() + vec2f(std::rand() % 6 - 3, std::rand() % 6 - 3);
                 if (m_world->isPassable((vec2i)dst)) {
                     walkTo(dst);
                     break;
@@ -117,8 +130,10 @@ void Character::update(float dt) {
 }
 
 void Character::setSprite(Sprite* sprite) {
-    m_sprite = sprite;
-    m_frame = 0;
+    if (m_sprite != sprite) {
+        m_sprite = sprite;
+        m_frame = 0;
+    }
 }
 
 void Character::lookAt(const vec2f& pos) {
@@ -126,14 +141,21 @@ void Character::lookAt(const vec2f& pos) {
 }
 
 void Character::throwAt(const vec2f& pos) {
-    lookAt(pos);
-    setSprite(&s_throw1);
+    if (m_sprite == &s_idle || m_sprite == &s_walk || m_sprite == &s_throw1) {
+        lookAt(pos);
+        setSprite(&s_throw1);
+    }
 }
 
 void Character::walkTo(const vec2f& pos) {
-    m_path = m_world->buildPath(m_pos, pos);
-    lookAt(m_path.back());
-    setSprite(&s_walk);
+    if (m_sprite == &s_idle || m_sprite == &s_walk || m_sprite == &s_throw1) {
+        m_path = m_world->buildPath(m_pos, pos);
+
+        if (!m_path.empty()) {
+            lookAt(m_path.back());
+            setSprite(&s_walk);
+        }
+    }
 }
 
 void Character::onCollision(Object* other) {

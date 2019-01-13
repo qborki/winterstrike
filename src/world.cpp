@@ -26,7 +26,26 @@
 #include "object.h"
 #include "camera.h"
 
-static Sprite s_tiles("tiles.png", vec2i(128, 196), vec2i(64, 164), 0, 18);
+static Sprite s_sprites[] = {
+    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 0, 1),
+    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 1, 1),
+    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 2, 1),
+    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 3, 1),
+    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 4, 1),
+    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 5, 1),
+    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 6, 1),
+    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 7, 1),
+    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 8, 1),
+    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 9, 1),
+    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 10, 1),
+    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 11, 1),
+    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 12, 1),
+    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 13, 1),
+    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 14, 1),
+    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 15, 1),
+    Sprite("trees.png", vec2i(128, 192), vec2i(64, 160), 0, 1)
+};
+
 
 World::World() {
 }
@@ -59,33 +78,40 @@ static int heightmap(int x, int y) {
     y = abs(y);
 
     // flat central area
-    if (x < 4 && y < 4) {
+    if (x < 8 && y < 8) {
         return 0;
     }
 
-    // smooth
-    return hash(x + 0, y + 0, 20) % 3
-        && hash(x + 1, y + 0, 20) % 3
-        && hash(x + 0, y + 1, 20) % 3
-        && hash(x + 1, y + 1, 20) % 3;
+    // smooth 3x3
+    static const vec2i steps[] = {{0, 0}, {0, -1}, {-1, 0}, {+1, 0}, {0, +1}, {-1, -1}, {+1, -1}, {-1, +1}, {+1, +1}};
+    int result = 1;
+    for (auto step : steps) {
+        result = result && hash(x + step.x, y + step.y, 20) % 6;
+    }
+    return result;
+}
+
+/**
+ * get correct wall tile
+ */
+static int wall(int x, int y) {
+    return heightmap(x + 1, y + 0)
+      | heightmap(x + 0, y + 0) << 1
+      | heightmap(x + 1, y + 1) << 2
+      | heightmap(x + 0, y + 1) << 3;
 }
 
 /**
  * Procedural map generation
  */
 void World::Tile::generate(int x, int y) {
-    int a;
-    // get correct wall tile
-    a = heightmap(x + 1, y + 0)
-      | heightmap(x + 0, y + 0) << 1
-      | heightmap(x + 1, y + 1) << 2
-      | heightmap(x + 0, y + 1) << 3;
+    int a = wall(x, y);;
 
     // if not a wall place some obstacles
     if (a == 0) {
-        a = hash(abs(x), abs(y), 21) % 10;
+        a = hash(abs(x), abs(y), 21) % 40;
 
-        if (a < 1) {
+        if (a < 1 && wall(x - 1, y + 1) == 0 && wall(x + 1, y - 1) == 0) {
             a = 16 + a;
         }
         else {
@@ -139,16 +165,11 @@ std::vector<Object*> World::getObjectsInRadius(const vec2f& pos, float radius) {
 /**
  * Debug render tile
  */
-void World::renderMarker(SDL_Renderer* renderer, Camera* camera, const vec2f& pos, int type) {
+void World::renderMarker(SDL_Renderer* renderer, Camera* camera, const vec2f& pos, unsigned rgba) {
     vec2i v = camera->worldToScreen(pos);
-    // SDL_Point points[] = {{v.x, v.y + 32}, {v.x - 64, v.y}, {v.x + 64, v.y}, {v.x, v.y + 32}, {v.x, v.y - 32}, {v.x - 64, v.y}, {v.x + 64, v.y}, {v.x, v.y - 32}};
-    SDL_Point points[] = {{v.x, v.y + 32}, {v.x - 64, v.y}, {v.x, v.y - 32}, {v.x + 64, v.y}, {v.x, v.y + 32}};
-    if (type == 0) {
-        SDL_SetRenderDrawColor(renderer, 255, 0, 255, SDL_ALPHA_OPAQUE);
-    }
-    else {
-        SDL_SetRenderDrawColor(renderer, 128, 255, 128, SDL_ALPHA_OPAQUE);
-    }
+    SDL_Point points[] = {{v.x, v.y + 16}, {v.x - 32, v.y}, {v.x, v.y - 16}, {v.x + 32, v.y}, {v.x, v.y + 16}};
+
+    SDL_SetRenderDrawColor(renderer, Uint8(rgba >> 24 & 0xff), Uint8((rgba >> 16) & 0xff), Uint8( (rgba >> 8) & 0xff), Uint8(rgba & 0xff));
     SDL_RenderDrawLines(renderer, points, sizeof(points) / sizeof(points[0]));
 }
 
@@ -156,8 +177,8 @@ void World::renderMarker(SDL_Renderer* renderer, Camera* camera, const vec2f& po
  * Main rendering function. Draw world and its objects.
  */
 void World::render(SDL_Renderer* renderer, Camera* camera) {
-    vec2f lt = camera->screenToWorld(vec2i()),
-          rb = camera->screenToWorld(camera->getSize() + s_tiles.getOffset());
+    vec2f lt = camera->screenToWorld(vec2i() - s_sprites[16].getOffset()),
+          rb = camera->screenToWorld(camera->getSize() + s_sprites[16].getOffset());
 
     lt.x = floor(lt.x);
     lt.y = floor(lt.y);
@@ -175,7 +196,7 @@ void World::render(SDL_Renderer* renderer, Camera* camera) {
                 Tile& tile = getTile(vec2i(pos));
 
                 if (tile.m_layers[z] >= 0) {
-                    s_tiles.render(renderer, camera->worldToScreen(pos), 0, tile.m_layers[z]);
+                    s_sprites[tile.m_layers[z]].render(renderer, camera->worldToScreen(pos), 0, 0);
                 }
 
                 pos += vec2f(1, -1);
@@ -191,6 +212,14 @@ void World::render(SDL_Renderer* renderer, Camera* camera) {
 
             pos += vec2f(-cx, cx);
             pos += a % 2 ? vec2f(1, 0) : vec2f(0, 1);
+        }
+        if (z == 0) {
+            // for (auto it : m_objects) {
+            //     for (auto p : it->m_path) {
+            //         renderMarker(renderer, camera, p, 0x996666ff);
+            //     }
+            // }
+            renderMarker(renderer, camera, m_cursor, 0x80ff80ff);
         }
     }
 
@@ -257,9 +286,11 @@ void World::update(float dt) {
                     continue;
                 }
 
-                vec2f delta = object->getPosition() - other->getPosition();
+                vec2f other_pos = other->getPosition();
+                vec2i other_ipos = vec2i(round(other_pos.x), round(other_pos.y));
+                // vec2f delta = object->getPosition() - other->getPosition();
 
-                if (delta.length() < 0.2) {
+                if (ipos == other_ipos) {
                     // restore position
                     if (solid) {
                         object->setPosition(backup_pos);
@@ -300,8 +331,8 @@ void World::update(float dt) {
  * A-star pathfinding with diagonal heuristic
  */
 std::vector<vec2f> World::buildPath(const vec2f& fstart, const vec2f& fgoal) {
-    static const vec2i steps[8] = {{0, -1}, {-1, 0}, {+1, 0}, {0, +1}, {-1, -1}, {+1, -1}, {-1, +1}, {+1, +1}};
-    static const int weights[8] = {1000, 1000, 1000, 1000, 1414, 1414, 1414, 1414}; // M_SQRT2
+    static const vec2i steps[] = {{0, -1}, {-1, 0}, {+1, 0}, {0, +1}, {-1, -1}, {+1, -1}, {-1, +1}, {+1, +1}};
+    static const int weights[] = {1000, 1000, 1000, 1000, 1414, 1414, 1414, 1414}; // M_SQRT2
 
     struct Node {
         struct Compare {
@@ -311,7 +342,7 @@ std::vector<vec2f> World::buildPath(const vec2f& fstart, const vec2f& fgoal) {
         };
         using PrioQ = std::priority_queue<Node*, std::vector<Node*>, Compare>;
 
-        Node(): actual(99999) {}
+        Node(): actual(std::numeric_limits<int>::max()) {}
         Node* parent;
         vec2i idx;
         int   actual;
@@ -324,14 +355,11 @@ std::vector<vec2f> World::buildPath(const vec2f& fstart, const vec2f& fgoal) {
     vec2i start(round(fstart.x), round(fstart.y));
     vec2i goal(round(fgoal.x), round(fgoal.y));
 
-    m_nodes.clear();
-    m_queue = Node::PrioQ();
-
     Node* cur = &m_nodes[start];
     cur->idx = start;
     cur->parent = nullptr;
     cur->actual = 0;
-    cur->heuristic = 99999;
+    cur->heuristic = std::numeric_limits<int>::max();
 
     m_queue.push(cur);
 
@@ -344,8 +372,13 @@ std::vector<vec2f> World::buildPath(const vec2f& fstart, const vec2f& fgoal) {
 
         for (int i = 0; i < 8; ++i) {
             vec2i idx = cur->idx + steps[i];
+            bool passable = isPassable(idx);
+            if (i > 3) {
+                passable = passable && isPassable(cur->idx + vec2i(steps[i].x, 0));
+                passable = passable && isPassable(cur->idx + vec2i(0, steps[i].y));
+            }
 
-            if (isPassable(idx)) {
+            if (passable) {
                 Node* next = &m_nodes[idx];
                 int actual = cur->actual + weights[i];
 
@@ -361,8 +394,6 @@ std::vector<vec2f> World::buildPath(const vec2f& fstart, const vec2f& fgoal) {
         }
     }
 
-    vec2f last;
-
     // if we couldn't reach the goal, build path to the closest node instead
     if (cur->idx != goal) {
         for (auto& it : m_nodes) {
@@ -370,19 +401,10 @@ std::vector<vec2f> World::buildPath(const vec2f& fstart, const vec2f& fgoal) {
                 cur = &it.second;
             }
         }
-        last = (vec2f)cur->idx;
-    }
-    else {
-        // precise destination
-        last = fgoal;
     }
 
     std::vector<vec2f> path;
-
-    // add final destination
-    path.push_back(last);
-
-    for (cur = cur->parent; cur && cur->idx != start; cur = cur->parent) {
+    for (; cur && cur->idx != start; cur = cur->parent) {
         path.push_back((vec2f)(cur->idx));
     }
     return path;
@@ -402,33 +424,33 @@ bool World::checkVisible(const vec2f& forigin, const vec2f& ftarget) {
     int steps = abs(target.x - cursor.x) + abs(target.y - cursor.y);
     int stepX = (ray.x >= 0) ? 1 : -1;
     int stepY = (ray.y >= 0) ? 1 : -1;
-	float tMaxX, tMaxY, tDeltaX, tDeltaY;
+    float tMaxX, tMaxY, tDeltaX, tDeltaY;
 
     tMaxX = tMaxY = tDeltaX = tDeltaY = std::numeric_limits<float>::infinity();
 
-	if (ray.x != 0) {
-		tDeltaX = float(stepX) / ray.x;
-		tMaxX = (std::round(forigin.x) - (forigin.x + 0.5f) + (ray.x > 0 ? 1.0f : 0.0f)) / ray.x;
-	}
-	if (ray.y != 0) {
-		tDeltaY = float(stepY) / ray.y;
-		tMaxY = (std::round(forigin.y) - (forigin.y + 0.5f) + (ray.y > 0 ? 1.0f : 0.0f)) / ray.y;
-	}
+    if (ray.x != 0) {
+        tDeltaX = float(stepX) / ray.x;
+        tMaxX = (std::round(forigin.x) - (forigin.x + 0.5f) + (ray.x > 0 ? 1.0f : 0.0f)) / ray.x;
+    }
+    if (ray.y != 0) {
+        tDeltaY = float(stepY) / ray.y;
+        tMaxY = (std::round(forigin.y) - (forigin.y + 0.5f) + (ray.y > 0 ? 1.0f : 0.0f)) / ray.y;
+    }
 
-	for (int i = 0; i < steps; i++) {
-		if (tMaxX < tMaxY) {
+    for (int i = 0; i < steps; i++) {
+        if (tMaxX < tMaxY) {
             cursor.x += stepX;
             tMaxX += tDeltaX;
-		}
+        }
         else {
             cursor.y += stepY;
             tMaxY += tDeltaY;
-		}
+        }
 
         if (!isPassable(cursor)) {
             return false;
         }
-	}
+    }
 
     return true;
 }

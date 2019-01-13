@@ -171,11 +171,11 @@ Game& Game::init(int argc, char* argv[]) {
     m_world  = new World();
     m_camera = (Camera*) m_world->spawn("Camera", vec2f(0, 0));
     m_camera->setSize(vec2i(800, 600));
-    m_player = (Character*) m_world->spawn("Character", vec2f(-0.49,-0.49));
-    m_world->spawn("CharacterAi", vec2f(1,1));
-    m_world->spawn("CharacterAi", vec2f(-1,1));
-    m_world->spawn("CharacterAi", vec2f(-1,-1));
-    m_world->spawn("CharacterAi", vec2f(1,-1));
+    m_player = (Character*) m_world->spawn("Character", vec2f(0, 0));
+    m_world->spawn("CharacterAi", vec2f(4,4));
+    m_world->spawn("CharacterAi", vec2f(-4,4));
+    m_world->spawn("CharacterAi", vec2f(-4,-4));
+    m_world->spawn("CharacterAi", vec2f(4,-4));
 
     m_running = true;
     return *this;
@@ -217,12 +217,16 @@ void Game::run() {
                     break;
                 }
             }
+            else if (ev.type == SDL_MOUSEMOTION) {
+                vec2f cursor = m_camera->screenToWorld(vec2i(ev.motion.x, ev.motion.y));
+                m_world->m_cursor = vec2f(round(cursor.x), round(cursor.y));
+            }
             else if (ev.type == SDL_MOUSEBUTTONUP) {
                 if (ev.button.button == SDL_BUTTON_LEFT) {
                     m_player->walkTo(m_camera->screenToWorld(vec2i(ev.button.x, ev.button.y)));
                 }
                 else if (ev.button.button == SDL_BUTTON_RIGHT) {
-                    m_player->throwAt(m_camera->screenToWorld(vec2i(ev.button.x, ev.button.y + 64)));
+                    m_player->throwAt(m_camera->screenToWorld(vec2i(ev.button.x, ev.button.y)));
                 }
             }
         }

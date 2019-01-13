@@ -90,6 +90,7 @@ public:
     virtual void onCollision(Object* other);
     virtual void onHit(Object* other, int hp);
 
+    std::vector<vec2f> m_path;
 protected:
     static int max_object_id;
 
@@ -105,5 +106,6 @@ protected:
     bool   m_collider; // object may collide with other objects
     int    m_object_id;
     int    m_owner_id;
+
 };
 #endif

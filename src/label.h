@@ -24,7 +24,7 @@ class Label: public Object {
 public:
     Label();
 
-    void render(SDL_Renderer* renderer, Camera*, const vec2i& pos);
+    void render(SDL_Renderer* renderer, const vec2i& pos);
     void update(float dt);
     void setText(const std::string& text);
 

@@ -41,7 +41,5 @@ private:
     float m_frame;
     int m_hp;
     bool m_ai;
-
-    std::vector<vec2f> m_path;
 };
 #endif

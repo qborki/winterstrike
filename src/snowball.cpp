@@ -26,7 +26,7 @@ static Sprite s_explode("snowball.png",  vec2i(64, 64), vec2i(32, 12), 1, 8);
 
 class Snowball: public Object {
 public:
-    Snowball(): Object("Snowball"), m_sprite(&s_snowball), m_frame(0), m_speed(8), m_height(64), m_ttl(1) {
+    Snowball(): Object("Snowball"), m_sprite(&s_snowball), m_frame(0), m_speed(16), m_height(64), m_ttl(1) {
         m_solid = false;
     }
 

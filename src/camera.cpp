@@ -32,7 +32,7 @@ const vec2i Camera::getSize() const {
 }
 
 const vec2i Camera::worldToScreen(const vec2f& pos) const {
-    vec2f v = (pos - m_pos) * 128;
+    vec2f v = (pos - m_pos) * 64;
 
     return vec2i(round((v.x - v.y) / 2), round((v.x + v.y) / 4)) + m_size / 2;
 }
@@ -40,7 +40,7 @@ const vec2i Camera::worldToScreen(const vec2f& pos) const {
 const vec2f Camera::screenToWorld(const vec2i& pos) const {
     vec2i v = pos - m_size / 2;
 
-    return vec2f(2.0 * v.y + v.x, 2.0 * v.y - v.x) / 128 + m_pos;
+    return vec2f(2.0 * v.y + v.x, 2.0 * v.y - v.x) / 64 + m_pos;
 }
 
 static bool init = Game::get().setFactory("Camera", []() {
