@@ -171,12 +171,12 @@ Game& Game::init(int argc, char* argv[]) {
     m_world  = new World();
     m_camera = (Camera*) m_world->spawn("Camera", vec2f(0, 0));
     m_camera->setSize(vec2i(800, 600));
-    m_player = (Character*) m_world->spawn("Character", vec2f(0, 0));
-    m_world->spawn("CharacterAi", vec2f(-3,-3));
-    m_world->spawn("CharacterAi", vec2f(-1,-4));
-    m_world->spawn("CharacterAi", vec2f(0,-6));
-    m_world->spawn("CharacterAi", vec2f(1,-4));
-    m_world->spawn("CharacterAi", vec2f(3,-3));
+    m_player = (Character*) m_world->spawn("Character", vec2f(0, 7));
+    m_world->spawn("CharacterAi", vec2f(-3,-5));
+    m_world->spawn("CharacterAi", vec2f(-1,-6));
+    m_world->spawn("CharacterAi", vec2f(0,-7));
+    m_world->spawn("CharacterAi", vec2f(1,-6));
+    m_world->spawn("CharacterAi", vec2f(3,-5));
 
     m_running = true;
     return *this;
