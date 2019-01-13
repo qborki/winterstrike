@@ -21,33 +21,31 @@
 #include <map>
 #include <SDL.h>
 #include "game.h"
-#include "sprite.h"
 #include "world.h"
 #include "object.h"
 #include "camera.h"
 
-static Sprite s_sprites[] = {
-    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 0, 1),
-    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 1, 1),
-    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 2, 1),
-    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 3, 1),
-    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 4, 1),
-    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 5, 1),
-    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 6, 1),
-    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 7, 1),
-    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 8, 1),
-    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 9, 1),
-    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 10, 1),
-    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 11, 1),
-    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 12, 1),
-    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 13, 1),
-    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 14, 1),
-    Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 15, 1),
-    Sprite("trees.png", vec2i(128, 192), vec2i(64, 160), 0, 1)
-};
-
-
-World::World() {
+World::World() :
+    m_sprites({
+        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 0, 1),
+        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 1, 1),
+        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 2, 1),
+        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 3, 1),
+        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 4, 1),
+        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 5, 1),
+        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 6, 1),
+        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 7, 1),
+        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 8, 1),
+        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 9, 1),
+        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 10, 1),
+        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 11, 1),
+        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 12, 1),
+        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 13, 1),
+        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 14, 1),
+        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 15, 1),
+        Sprite("trees.png", vec2i(128, 192), vec2i(64, 160), 0, 1)
+    })
+{
 }
 
 World::~World() {
@@ -120,7 +118,8 @@ void World::Tile::generate(int x, int y) {
     }
 
     m_layers[0] = 0;
-    m_layers[1] = a;
+    m_layers[1] = -1;
+    m_layers[2] = a;
     m_passable = (a == -1);
 }
 
@@ -177,8 +176,8 @@ void World::renderMarker(SDL_Renderer* renderer, Camera* camera, const vec2f& po
  * Main rendering function. Draw world and its objects.
  */
 void World::render(SDL_Renderer* renderer, Camera* camera) {
-    vec2f lt = camera->screenToWorld(vec2i() - s_sprites[16].getOffset()),
-          rb = camera->screenToWorld(camera->getSize() + s_sprites[16].getOffset());
+    vec2f lt = camera->screenToWorld(vec2i() - m_sprites[16].getOffset()),
+          rb = camera->screenToWorld(camera->getSize() + m_sprites[16].getOffset());
 
     lt.x = floor(lt.x);
     lt.y = floor(lt.y);
@@ -188,7 +187,7 @@ void World::render(SDL_Renderer* renderer, Camera* camera) {
     int cx = ceil((rb.x - rb.y - lt.x + lt.y + 1) / 2 + 1);
     int cy = ceil(rb.x + rb.y - lt.x - lt.y + 1);
 
-    for (int z = 0; z < 2; ++z) {
+    for (int z = 0; z < Tile::LAYERS; ++z) {
         vec2f pos = lt;
 
         for (int a = 0; a < cy; ++a) {
@@ -196,7 +195,7 @@ void World::render(SDL_Renderer* renderer, Camera* camera) {
                 Tile& tile = getTile(vec2i(pos));
 
                 if (tile.m_layers[z] >= 0) {
-                    s_sprites[tile.m_layers[z]].render(renderer, camera->worldToScreen(pos), 0, 0);
+                    m_sprites[tile.m_layers[z]].render(renderer, camera->worldToScreen(pos), 0, 0);
                 }
 
                 pos += vec2f(1, -1);
@@ -214,23 +213,15 @@ void World::render(SDL_Renderer* renderer, Camera* camera) {
             pos += a % 2 ? vec2f(1, 0) : vec2f(0, 1);
         }
         if (z == 0) {
-            // for (auto it : m_objects) {
-            //     for (auto p : it->m_path) {
-            //         renderMarker(renderer, camera, p, 0x996666ff);
-            //     }
-            // }
             renderMarker(renderer, camera, m_cursor, 0x80ff80ff);
         }
     }
 
     for (auto it : m_objects) {
-        if (it->getZ() > 1) {
+        if (it->getZ() >= Tile::LAYERS) {
             it->render(renderer, camera->worldToScreen(it->getPosition()));
         }
     }
-
-    // renderMarker(renderer, camera, lt, 1);
-    // renderMarker(renderer, camera, rb + vec2f(0, 0), 2);
 }
 
 /**

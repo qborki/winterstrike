@@ -17,9 +17,9 @@
 #ifndef _CHARACTER_H
 #define _CHARACTER_H
 
+#include <vector>
 #include "object.h"
-
-class Sprite;
+#include "sprite.h"
 
 class Character: public Object {
 public:
@@ -37,9 +37,19 @@ public:
 private:
     void setSprite(Sprite* );
 
+    std::vector<vec2f> m_path;
     Sprite* m_sprite;
     float m_frame;
     int m_hp;
     bool m_ai;
+
+    std::string m_spritesheet;
+    Sprite m_idle;
+    Sprite m_walk;
+    Sprite m_throw1;
+    Sprite m_throw2;
+    Sprite m_hit;
+    Sprite m_die;
+    Sprite m_dead;
 };
 #endif

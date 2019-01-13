@@ -18,7 +18,6 @@
 #define _OBJECT_H
 
 #include <string>
-#include <vector>
 #include "vec.h"
 
 class World;
@@ -89,8 +88,6 @@ public:
     // events
     virtual void onCollision(Object* other);
     virtual void onHit(Object* other, int hp);
-
-    std::vector<vec2f> m_path;
 protected:
     static int max_object_id;
 

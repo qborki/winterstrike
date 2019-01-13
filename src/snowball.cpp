@@ -21,17 +21,23 @@
 #include "sprite.h"
 #include "object.h"
 
-static Sprite s_snowball("snowball.png", vec2i(64, 64), vec2i(32, 12), 0, 2);
-static Sprite s_explode("snowball.png",  vec2i(64, 64), vec2i(32, 12), 1, 8);
-
 class Snowball: public Object {
 public:
-    Snowball(): Object("Snowball"), m_sprite(&s_snowball), m_frame(0), m_speed(16), m_height(64), m_ttl(1) {
+    Snowball():
+        Object("Snowball"),
+        m_snowball("snowball.png", vec2i(64, 64), vec2i(32, 12), 0, 2),
+        m_explode("snowball.png",  vec2i(64, 64), vec2i(32, 12), 1, 8),
+        m_sprite(&m_snowball),
+        m_frame(0),
+        m_speed(16),
+        m_height(64),
+        m_ttl(1)
+    {
         m_solid = false;
     }
 
     void render(SDL_Renderer* renderer, const vec2i& pos) {
-        if (m_sprite == &s_snowball) {
+        if (m_sprite == &m_snowball) {
             // shadow
             m_sprite->render(renderer, vec2i(pos.x, floor(pos.y)), 0, 0);
             m_sprite->render(renderer, vec2i(pos.x, floor(pos.y - m_height)), 0, 1);
@@ -42,14 +48,14 @@ public:
     }
 
     void update(float dt) {
-        if (m_sprite == &s_snowball) {
+        if (m_sprite == &m_snowball) {
             m_pos += m_dir * m_speed * dt;
             m_ttl -= dt;
             if (m_ttl < 0) {
-                m_sprite = &s_explode;
+                m_sprite = &m_explode;
             }
         }
-        else if (m_sprite == &s_explode) {
+        else if (m_sprite == &m_explode) {
             m_frame += 8 * dt;
             if (m_frame >= m_sprite->getFrames()) {
                 m_frame = 0;
@@ -60,8 +66,8 @@ public:
 
     void onCollision(Object* other) {
         // check owner so we don't get hit by own projectiles
-        if (m_sprite == &s_snowball && (other == nullptr || other->getObjectId() != m_owner_id)) {
-            m_sprite = &s_explode;
+        if (m_sprite == &m_snowball && (other == nullptr || other->getObjectId() != m_owner_id)) {
+            m_sprite = &m_explode;
             m_solid = false;
             m_collider = false;
 
@@ -75,6 +81,8 @@ public:
     } 
 
 private:
+    Sprite m_snowball;
+    Sprite m_explode;
     Sprite* m_sprite;
     float m_frame;
     float m_speed;

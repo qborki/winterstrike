@@ -20,6 +20,7 @@
 #include <vector>
 #include <map>
 #include "vec.h"
+#include "sprite.h"
 
 struct SDL_Renderer;
 class Camera;
@@ -40,17 +41,16 @@ public:
     std::vector<Object*> getObjectsInRadius(const vec2f& pos, float radius);
     std::vector<vec2f> buildPath(const vec2f& from, const vec2f& goal);
     bool checkVisible(const vec2f& origin, const vec2f& target);
-
-
-    void renderMarker(SDL_Renderer*, Camera*, const vec2f& pos, unsigned rgba);
-
     vec2f m_cursor;
+
 private:
+    std::vector<Sprite> m_sprites;
     std::vector<Object*> m_objects;
 
     // Procedural tile generation and caching
     struct Tile {
-        int m_layers[2];
+        enum  { LAYERS = 3 };
+        int m_layers[LAYERS];
         int m_passable;
         void generate(int x, int y);
     };
@@ -64,6 +64,8 @@ private:
     std::map<vec2i, Chunk> m_chunks;
 
     Tile& getTile(const vec2i&);
+
+    void renderMarker(SDL_Renderer*, Camera*, const vec2f& pos, unsigned rgba);
 };
 
 #endif

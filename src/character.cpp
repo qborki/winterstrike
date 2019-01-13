@@ -22,15 +22,21 @@
 #include "character.h"
 #include "label.h"
 
-static Sprite s_idle  ("character.png", vec2i(128, 128), vec2i(64, 94), 8, 1);
-static Sprite s_walk  ("character.png", vec2i(128, 128), vec2i(64, 94), 0, 8);
-static Sprite s_throw1("character.png", vec2i(128, 128), vec2i(64, 94), 8, 5);
-static Sprite s_throw2("character.png", vec2i(128, 128), vec2i(64, 94), 13, 3);
-static Sprite s_hit   ("character.png", vec2i(128, 128), vec2i(64, 94), 16, 8);
-static Sprite s_die   ("character.png", vec2i(128, 128), vec2i(64, 94), 24, 8);
-static Sprite s_dead  ("character.png", vec2i(128, 128), vec2i(64, 94), 31, 1);
-
-Character::Character(bool ai) : Object("Character"), m_sprite(&s_idle), m_frame(0), m_hp(100), m_ai(ai) {
+Character::Character(bool ai):
+    Object(ai ? "CharacterAI" : "Character"),
+    m_sprite(&m_idle),
+    m_frame(0),
+    m_hp(100),
+    m_ai(ai),
+    m_spritesheet(std::string("character-") + (m_ai ? "blue" : "red") + ".png"),
+    m_idle  (m_spritesheet, vec2i(128, 128), vec2i(64, 94), 8, 1),
+    m_walk  (m_spritesheet, vec2i(128, 128), vec2i(64, 94), 0, 8),
+    m_throw1(m_spritesheet, vec2i(128, 128), vec2i(64, 94), 8, 5),
+    m_throw2(m_spritesheet, vec2i(128, 128), vec2i(64, 94), 13, 3),
+    m_hit   (m_spritesheet, vec2i(128, 128), vec2i(64, 94), 16, 8),
+    m_die   (m_spritesheet, vec2i(128, 128), vec2i(64, 94), 24, 8),
+    m_dead  (m_spritesheet, vec2i(128, 128), vec2i(64, 94), 31, 1)
+{
 }
 
 void Character::render(SDL_Renderer* renderer, const vec2i& pos) {
@@ -42,23 +48,30 @@ void Character::update(float dt) {
     m_frame += 8 * dt;
     if (m_frame >= m_sprite->getFrames()) {
 
-        if (m_sprite == &s_throw1) {
-            setSprite(&s_throw2);
+        if (m_sprite == &m_throw1) {
+            setSprite(&m_throw2);
 
             Object* o = m_world->spawn("Snowball", m_pos);
             o->setDirection(m_dir);
             o->setOwnerId(m_object_id);
         }
-        else if (m_sprite == &s_throw2) {
-            setSprite(&s_idle);
+        else if (m_sprite == &m_throw2) {
+            setSprite(&m_idle);
         }
-        else if (m_sprite == &s_hit) {
-            setSprite(&s_idle);
+        else if (m_sprite == &m_hit) {
+            setSprite(&m_idle);
         }
-        else if (m_sprite == &s_die) {
-            setSprite(&s_dead);
-            m_z = 0;
+        else if (m_sprite == &m_die) {
+            setSprite(&m_dead);
+            m_z = 1;
             m_classname = "Corpse";
+
+            if (!m_ai) {
+                Label* label = (Label*) m_world->spawn("Label", m_pos);
+                label->setSize(96);
+                label->setColor(0x804040ff);
+                label->setText("Game over");
+            }
         }
         else {
             m_frame = 0; // loop
@@ -66,7 +79,7 @@ void Character::update(float dt) {
     }
 
     // update character position
-    if (m_sprite == &s_walk) {
+    if (m_sprite == &m_walk) {
         m_pos += m_dir * 4 * dt;
 
         // check next waypoint
@@ -74,7 +87,7 @@ void Character::update(float dt) {
             m_path.pop_back();
 
             if (m_path.empty()) {
-                setSprite(&s_idle);
+                setSprite(&m_idle);
             }
             else {
                 lookAt(m_path.back());
@@ -83,7 +96,7 @@ void Character::update(float dt) {
     }
 
     // idle AIs might do something
-    if (m_ai && m_sprite == &s_idle && std::rand() < RAND_MAX / 64) {
+    if (m_ai && m_sprite == &m_idle && std::rand() < RAND_MAX / 64) {
         bool attack = false;
 
         // attack someone
@@ -141,36 +154,36 @@ void Character::lookAt(const vec2f& pos) {
 }
 
 void Character::throwAt(const vec2f& pos) {
-    if (m_sprite == &s_idle || m_sprite == &s_walk || m_sprite == &s_throw1) {
+    if (m_sprite == &m_idle || m_sprite == &m_walk || m_sprite == &m_throw1) {
         lookAt(pos);
-        setSprite(&s_throw1);
+        setSprite(&m_throw1);
     }
 }
 
 void Character::walkTo(const vec2f& pos) {
-    if (m_sprite == &s_idle || m_sprite == &s_walk || m_sprite == &s_throw1) {
+    if (m_sprite == &m_idle || m_sprite == &m_walk || m_sprite == &m_throw1) {
         m_path = m_world->buildPath(m_pos, pos);
 
         if (!m_path.empty()) {
             lookAt(m_path.back());
-            setSprite(&s_walk);
+            setSprite(&m_walk);
         }
     }
 }
 
 void Character::onCollision(Object* other) {
-    if (m_sprite == &s_walk) {
-        setSprite(&s_idle);
+    if (m_sprite == &m_walk) {
+        setSprite(&m_idle);
     }
 }
 
 void Character::onHit(Object* other, int hp) {
     m_hp -= hp;
     if (m_hp > 0) {
-        setSprite(&s_hit);
+        setSprite(&m_hit);
     }
     else {
-        setSprite(&s_die);
+        setSprite(&m_die);
         m_solid = false;
         m_collider = false;
     }

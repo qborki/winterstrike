@@ -29,7 +29,7 @@ Object::Object(const std::string& classname) :
     m_object_id(max_object_id++),
     m_world(nullptr),
     m_dir(1, 0),
-    m_z(1),
+    m_z(2),
     m_facing(0),
     m_alive(true),
     m_solid(true),

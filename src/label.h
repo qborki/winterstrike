@@ -27,9 +27,13 @@ public:
     void render(SDL_Renderer* renderer, const vec2i& pos);
     void update(float dt);
     void setText(const std::string& text);
+    void setSize(unsigned ptsize);
+    void setColor(unsigned rgba);
 
 private:
     std::string m_text;
+    unsigned m_size;
+    unsigned m_rgba;
     Sprite m_sprite;
     float m_ttl;
 };

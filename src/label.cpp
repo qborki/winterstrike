@@ -17,7 +17,7 @@
 #include "game.h"
 #include "label.h"
 
-Label::Label(): Object("Label"), m_ttl(1) {
+Label::Label(): Object("Label"), m_ttl(1), m_size(32), m_rgba(0x408040ff) {
     m_solid = false;
     m_collider = false;
 }
@@ -27,9 +27,19 @@ void Label::setText(const std::string& text) {
     m_sprite.destroy();
 }
 
+void Label::setSize(unsigned size) {
+    m_size = size;
+    m_sprite.destroy();
+}
+
+void Label::setColor(unsigned rgba) {
+    m_rgba = rgba;
+    m_sprite.destroy();
+}
+
 void Label::render(SDL_Renderer* renderer, const vec2i& pos) {
     if (!m_sprite.exists()) {
-        m_sprite.createFromText(renderer, m_text, "LinBiolinum_Rah.ttf", 32, 64, 128, 64);
+        m_sprite.createFromText(renderer, m_text, "LinBiolinum_Rah.ttf", m_size,  (m_rgba >> 24 & 0xff), ((m_rgba >> 16) & 0xff), ( (m_rgba >> 8) & 0xff));
     }
     vec2f scale ((1 - 0.25 * m_ttl*m_ttl), (1 - 0.25 * m_ttl*m_ttl));
     vec2i dst = pos + vec2i(0, - 96 - 32 + int(32 * m_ttl));
