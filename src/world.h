@@ -41,8 +41,6 @@ public:
     std::vector<Object*> getObjectsInRadius(const vec2f& pos, float radius);
     std::vector<vec2f> buildPath(const vec2f& from, const vec2f& goal);
     bool checkVisible(const vec2f& origin, const vec2f& target);
-    vec2f m_cursor;
-
 private:
     std::vector<Sprite> m_sprites;
     std::vector<Object*> m_objects;

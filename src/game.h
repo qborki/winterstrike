@@ -71,6 +71,7 @@ private:
     World*     m_world;
     Character* m_player;
     Camera*    m_camera;
+    Object*    m_cursor;
 
     bool m_fullScreen;
     bool m_musicEnabled;

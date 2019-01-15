@@ -44,6 +44,7 @@ Game::Game() :
     m_world(nullptr),
     m_player(nullptr),
     m_camera(nullptr),
+    m_cursor(nullptr),
     m_fullScreen(true),
     m_musicEnabled(true),
     m_running(false) {
@@ -169,6 +170,7 @@ Game& Game::init(int argc, char* argv[]) {
 
     // create a world and populate it
     m_world  = new World();
+    m_cursor = m_world->spawn("Cursor", vec2f(0,0));
     m_camera = (Camera*) m_world->spawn("Camera", vec2f(0, 0));
     m_camera->setSize(vec2i(800, 600));
     m_player = (Character*) m_world->spawn("Character", vec2f(0, 7));
@@ -220,7 +222,7 @@ void Game::run() {
             }
             else if (ev.type == SDL_MOUSEMOTION) {
                 vec2f cursor = m_camera->screenToWorld(vec2i(ev.motion.x, ev.motion.y));
-                m_world->m_cursor = vec2f(round(cursor.x), round(cursor.y));
+                m_cursor->setPosition(vec2f(round(cursor.x), round(cursor.y)));
             }
             else if (ev.type == SDL_MOUSEBUTTONUP) {
                 if (ev.button.button == SDL_BUTTON_LEFT) {

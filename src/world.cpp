@@ -212,9 +212,6 @@ void World::render(SDL_Renderer* renderer, Camera* camera) {
             pos += vec2f(-cx, cx);
             pos += a % 2 ? vec2f(1, 0) : vec2f(0, 1);
         }
-        if (z == 0) {
-            renderMarker(renderer, camera, m_cursor, 0x80ff80ff);
-        }
     }
 
     for (auto it : m_objects) {

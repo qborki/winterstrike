@@ -39,6 +39,7 @@ add_executable(${PROJECT_NAME}
 	src/sprite.cpp
 	src/world.cpp
     src/object.cpp
+    src/cursor.cpp
 	src/camera.cpp
 	src/character.cpp
     src/snowball.cpp
