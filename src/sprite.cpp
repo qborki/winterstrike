@@ -108,10 +108,10 @@ void Sprite::createFromFile(SDL_Renderer* renderer, const std::string& filename)
 /**
  * Create a new texture and render some text on it
  */
-void Sprite::createFromText(SDL_Renderer* renderer, const std::string& text, const std::string& fontname, int ptsize, int r, int  g, int  b) {
+void Sprite::createFromText(SDL_Renderer* renderer, const std::string& text, const std::string& fontname, int ptsize, int rgba) {
     TTF_Font* font = Game::get().getFont(fontname, ptsize);
     SDL_Surface* surface;
-    SDL_Color color = {Uint8(r), Uint8(g), Uint8(b)};
+    SDL_Color color = {Uint8(rgba >> 24 & 0xff), Uint8((rgba >> 16) & 0xff), Uint8((rgba >> 8) & 0xff)};
 
     destroy();
 
@@ -119,6 +119,48 @@ void Sprite::createFromText(SDL_Renderer* renderer, const std::string& text, con
         throw std::runtime_error(TTF_GetError());
     }
     else {
+        if ((m_texture = SDL_CreateTextureFromSurface(renderer, surface)) == nullptr) {
+            SDL_FreeSurface(surface);
+            throw std::runtime_error(SDL_GetError());
+        }
+        else {
+            m_size = vec2i(surface->w, surface->h);
+            m_offset = m_size / 2;
+            m_cols = 1;
+            m_rows = 1;
+            m_start = 0;
+            m_count = 1;
+            m_must_destroy = true;
+        }
+        SDL_FreeSurface(surface);
+    }
+}
+
+void Sprite::createFromVGradient(SDL_Renderer* renderer, int w, int h, int rgba0, int rgba1) {
+    SDL_Surface* surface;
+
+    if ((surface = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PIXELFORMAT_RGBA32)) == nullptr) {
+        SDL_FreeSurface(surface);
+        throw std::runtime_error(SDL_GetError());
+    }
+    else {
+        int ar = (rgba0 >> 24) & 0xff,
+            ag = (rgba0 >> 16) & 0xff,
+            ab = (rgba0 >> 8)  & 0xff,
+            br = (rgba1 >> 24) & 0xff,
+            bg = (rgba1 >> 16) & 0xff,
+            bb = (rgba1 >> 8)  & 0xff;
+
+        for (int i = 0; i < surface->h; i++) {
+            SDL_Color rgb = {
+                Uint8(ar + (br - ar) * i / surface->h),
+                Uint8(ag + (bg - ag) * i / surface->h),
+                Uint8(ab + (bb - ab) * i / surface->h)
+            };
+            SDL_Rect rect = {0, i, surface->w, i};
+            SDL_FillRect(surface, &rect, SDL_MapRGB(surface->format, rgb.r, rgb.g, rgb.b));
+        } 
+
         if ((m_texture = SDL_CreateTextureFromSurface(renderer, surface)) == nullptr) {
             SDL_FreeSurface(surface);
             throw std::runtime_error(SDL_GetError());

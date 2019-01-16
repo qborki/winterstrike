@@ -20,6 +20,7 @@
 #include <string>
 #include <map>
 
+class Menu;
 class World;
 class Object;
 class Camera;
@@ -34,6 +35,8 @@ typedef struct _TTF_Font TTF_Font;
 
 class Game {
 public:
+    enum {EV_MENU_SELECT};
+
     // singleton
     static Game& get();
 
@@ -43,6 +46,13 @@ public:
     Game& init(int argc, char* argv[]);
     void destroy();
     void run();
+
+    inline SDL_Renderer* getRenderer() {
+        return m_renderer;
+    }
+
+    // push custom SDL event
+    void pushEvent(int code, void* data1, void* data2);
 
     // Resource manager
     SDL_Texture* getTexture(const std::string& fileName);
@@ -55,11 +65,14 @@ public:
     ObjectCtor getFactory(const std::string& className) const;
     bool       setFactory(const std::string& className, ObjectCtor constructor);
 
+    void toggleMenu(bool show);
+    void createWorld();
 private:
     const std::string getDataFile(const std::string&) const;
 
     std::string m_base_path;
 
+    unsigned long m_event_type;
     SDL_Window*   m_window;
     SDL_Renderer* m_renderer;
     std::map<std::string, SDL_Texture*> m_textures;
@@ -68,6 +81,7 @@ private:
     std::map<std::string, Mix_Music*>   m_music;
     std::map<std::string, ObjectCtor>   m_factories;
 
+    Menu*      m_menu;
     World*     m_world;
     Character* m_player;
     Camera*    m_camera;

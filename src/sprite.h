@@ -31,8 +31,9 @@ public:
 
     void destroy();
 
-    void createFromText(SDL_Renderer*, const std::string& text, const std::string& fontname, int ptsize, int r, int g, int b);
+    void createFromText(SDL_Renderer*, const std::string& text, const std::string& fontname, int ptsize, int rgba);
     void createFromFile(SDL_Renderer*, const std::string& filename);
+    void createFromVGradient(SDL_Renderer* renderer, int w, int h, int rgba0, int rgba1);
 
     inline const bool exists() const {
         return m_texture != nullptr;

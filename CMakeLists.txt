@@ -27,6 +27,7 @@ include_directories(
 
 add_executable(${PROJECT_NAME}
 	src/game.h
+	src/menu.h
 	src/sprite.h
 	src/world.h
 	src/camera.h
@@ -36,6 +37,7 @@ add_executable(${PROJECT_NAME}
 
 	src/main.cpp
 	src/game.cpp
+	src/menu.cpp
 	src/sprite.cpp
 	src/world.cpp
     src/object.cpp

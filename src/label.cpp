@@ -39,7 +39,7 @@ void Label::setColor(unsigned rgba) {
 
 void Label::render(SDL_Renderer* renderer, const vec2i& pos) {
     if (!m_sprite.exists()) {
-        m_sprite.createFromText(renderer, m_text, "LinBiolinum_Rah.ttf", m_size,  (m_rgba >> 24 & 0xff), ((m_rgba >> 16) & 0xff), ( (m_rgba >> 8) & 0xff));
+        m_sprite.createFromText(renderer, m_text, "LinBiolinum_Rah.ttf", m_size, m_rgba);
     }
     vec2f scale ((1 - 0.25 * m_ttl*m_ttl), (1 - 0.25 * m_ttl*m_ttl));
     vec2i dst = pos + vec2i(0, - 96 - 32 + int(32 * m_ttl));
