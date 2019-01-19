@@ -14,26 +14,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _SPRITE_H
-#define _SPRITE_H
+#ifndef SPRITE_H
+#define SPRITE_H
 
 #include <string>
 #include "vec.h"
 
+class  Game;
 struct SDL_Texture;
 struct SDL_Renderer;
 
 class Sprite {
 public:
     Sprite();
-    Sprite(const std::string& fileName, const vec2i& size, const vec2i& offset, int start = 0, int count = 1);
     ~Sprite();
 
     void destroy();
 
-    void createFromText(SDL_Renderer*, const std::string& text, const std::string& fontname, int ptsize, int rgba);
-    void createFromFile(SDL_Renderer*, const std::string& filename);
-    void createFromVGradient(SDL_Renderer* renderer, int w, int h, int rgba0, int rgba1);
+    void text(Game&, const std::string& text,     const std::string& fontname, int ptsize, int rgba);
+    void load(Game&, const std::string& filename, const vec2i& size, const vec2i& offset = vec2i(), int start = 0, int count = 1);
+    void grad(Game&, const vec2i& size, int rgba0, int rgba1);
 
     inline const bool exists() const {
         return m_texture != nullptr;
@@ -57,7 +57,6 @@ public:
 
     void render(SDL_Renderer*, const vec2i& pos, int side = 0, int frame = 0, const vec2f& scale = vec2f(1.0, 1.0));
 private:
-    std::string m_filename;
     SDL_Texture* m_texture;
     bool m_must_destroy;
     int m_rows;

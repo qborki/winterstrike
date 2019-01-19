@@ -14,47 +14,35 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include "game.h"
+#include "world.h"
 #include "label.h"
 
-Label::Label(): Object("Label"), m_ttl(1), m_size(32), m_rgba(0x408040ff) {
+Label::Label(World& world, const vec2f& pos, const std::string& text, unsigned size, unsigned rgba, float ttl) :
+    Object(world, "Label", pos),
+    m_age(0),
+    m_ttl(ttl),
+    m_factor(0)
+{
     m_solid = false;
     m_collider = false;
+    m_sprite.text(m_world.getGame(), text, "LinBiolinum_Rah.ttf", size, rgba);
 }
 
-void Label::setText(const std::string& text) {
-    m_text = text;
-    m_sprite.destroy();
-}
-
-void Label::setSize(unsigned size) {
-    m_size = size;
-    m_sprite.destroy();
-}
-
-void Label::setColor(unsigned rgba) {
-    m_rgba = rgba;
-    m_sprite.destroy();
-}
 
 void Label::render(SDL_Renderer* renderer, const vec2i& pos) {
-    if (!m_sprite.exists()) {
-        m_sprite.createFromText(renderer, m_text, "LinBiolinum_Rah.ttf", m_size, m_rgba);
-    }
-    vec2f scale ((1 - 0.25 * m_ttl*m_ttl), (1 - 0.25 * m_ttl*m_ttl));
-    vec2i dst = pos + vec2i(0, - 96 - 32 + int(32 * m_ttl));
-
-    m_sprite.render(renderer, dst, 0, 0, scale);
+    m_sprite.render(renderer, pos + vec2i(0, -64 * (1 + m_factor)), 0, 0, vec2f(0.5, 0.5) * (1 + m_factor));
 }
 
 void Label::update(float dt) {
-    m_ttl -= dt * 0.5;
-    if (m_ttl < 0) {
-        m_ttl = 0;
+    m_age += dt;
+    if (m_age >= m_ttl) {
+        m_age = m_ttl;
         m_alive = 0;
     }
-}
 
-static bool init = Game::get().setFactory("Label", []() {
-    return (Object*) new Label();
-});
+    // inverse cubic
+    m_factor = m_age / m_ttl;
+    m_factor = 1 - m_factor;
+    m_factor = m_factor * m_factor * m_factor;
+    m_factor = 1 - m_factor;
+}

@@ -14,8 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _CHARACTER_H
-#define _CHARACTER_H
+#ifndef CHARACTER_H
+#define CHARACTER_H
 
 #include <vector>
 #include "object.h"
@@ -23,7 +23,9 @@
 
 class Character: public Object {
 public:
-    Character(bool ai);
+    enum {IDLE, WALK, THROW1, THROW2, HIT, DIE, DEAD};
+
+    Character(World&, const vec2f& pos, bool ai);
 
     void render(SDL_Renderer* renderer, const vec2i& pos);
     void update(float dt);
@@ -35,21 +37,17 @@ public:
     void onCollision(Object* other);
     void onHit(Object* other, int hp);
 private:
-    void setSprite(Sprite* );
+    void setState(int state);
+    int  getFacing(const vec2f& dir);
+
+    vec2f  m_dir;
+    int    m_facing;
+    int    m_state;
+    float  m_frame;
+    int    m_hp;
+    bool   m_ai;
 
     std::vector<vec2f> m_path;
-    Sprite* m_sprite;
-    float m_frame;
-    int m_hp;
-    bool m_ai;
-
-    std::string m_spritesheet;
-    Sprite m_idle;
-    Sprite m_walk;
-    Sprite m_throw1;
-    Sprite m_throw2;
-    Sprite m_hit;
-    Sprite m_die;
-    Sprite m_dead;
+    std::vector<Sprite> m_sprites;
 };
 #endif

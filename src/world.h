@@ -14,56 +14,72 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _WORLD_H
-#define _WORLD_H
+#ifndef WORLD_H
+#define WORLD_H
 
+#include <memory>
 #include <vector>
-#include <map>
+#include <unordered_map>
+#include "state.h"
+#include "object.h"
 #include "vec.h"
 #include "sprite.h"
 
-struct SDL_Renderer;
-class Camera;
+class Character;
 class Object;
 
-class World {
+class World: public State {
 public:
-    World();
-    ~World();
+    World(Game&, int seed);
 
-    void render(SDL_Renderer*, Camera* camera);
+    void render(SDL_Renderer*);
     void update(float dt);
+    void onEvent(SDL_Event& ev);
 
-    Object* spawn(const std::string& classname, const vec2f& pos);
+    void add(std::unique_ptr<Object> object);
 
     bool isPassable(const vec2i& pos);
 
     std::vector<Object*> getObjectsInRadius(const vec2f& pos, float radius);
     std::vector<vec2f> buildPath(const vec2f& from, const vec2f& goal);
     bool checkVisible(const vec2f& origin, const vec2f& target);
-private:
-    std::vector<Sprite> m_sprites;
-    std::vector<Object*> m_objects;
 
-    // Procedural tile generation and caching
+    inline Game& getGame() {
+        return m_game;
+    }
+private:
     struct Tile {
         enum  { LAYERS = 3 };
         int m_layers[LAYERS];
         int m_passable;
-        void generate(int x, int y);
     };
     struct Chunk {
-        enum { SIZE = 32 };
+        enum { SIZE = 64 };
         Tile  m_tiles[SIZE][SIZE];
-        int   m_atime; // access timestamp for garbage collector
+        int   m_atime;
 
         inline Chunk(): m_atime(0) {}
     };
-    std::map<vec2i, Chunk> m_chunks;
+    const vec2i worldToScreen(const vec2f& pos) const;
+    const vec2f screenToWorld(const vec2i& pos) const;
+    void renderMarker(SDL_Renderer*, const vec2f& pos, unsigned rgba);
 
+    // procedural map generation
     Tile& getTile(const vec2i&);
+    void  generate(Tile&, const vec2i&);
+    int   getVertexZ(const vec2i&);
+    int   getWallSpriteId(const vec2i&);
 
-    void renderMarker(SDL_Renderer*, Camera*, const vec2f& pos, unsigned rgba);
+    int        m_seed;     
+    vec2i      m_cursor;
+    vec2i      m_viewport;
+    vec2f      m_camera;
+    Character* m_player;
+
+    std::vector<Sprite> m_sprites;
+    std::vector<std::unique_ptr<Object>> m_objects;
+    std::unordered_map<vec2i, Chunk> m_chunks;
+
 };
 
 #endif

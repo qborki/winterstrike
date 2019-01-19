@@ -14,8 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _OBJECT_H
-#define _OBJECT_H
+#ifndef OBJECT_H
+#define OBJECT_H
 
 #include <string>
 #include "vec.h"
@@ -25,7 +25,7 @@ struct SDL_Renderer;
 
 class Object {
 public:
-    Object(const std::string& className);
+    Object(World& world, const std::string& className, const vec2f& pos = vec2f());
     virtual ~Object();
 
     virtual void render(SDL_Renderer* renderer, const vec2i& screenCoords);
@@ -37,10 +37,6 @@ public:
 
     inline const vec2f& getPosition() const {
         return m_pos;
-    }
-
-    inline const vec2f& getDirection() const {
-        return m_dir;
     }
 
     inline const int getZ() const {
@@ -67,10 +63,6 @@ public:
         return m_owner_id;
     }
 
-    inline void setWorld(World* world) {
-        m_world = world;
-    }
-
     inline void setOwnerId(int object_id) {
         m_owner_id = object_id;
     }
@@ -78,8 +70,6 @@ public:
     inline void setPosition(const vec2f& pos) {
         m_pos = pos;
     }
-
-    void setDirection(const vec2f& dir);
 
     inline void setZ(int z) {
         m_z = z;
@@ -91,18 +81,14 @@ public:
 protected:
     static int max_object_id;
 
+    World&      m_world;
     std::string m_classname;
-
-    World* m_world;
-    vec2f  m_pos;
-    vec2f  m_dir;
-    int    m_z;
-    int    m_facing;
-    bool   m_alive;
-    bool   m_solid;    // object blocks movement
-    bool   m_collider; // object may collide with other objects
-    int    m_object_id;
-    int    m_owner_id;
-
+    int         m_object_id;
+    vec2f       m_pos;
+    int         m_z;
+    bool        m_alive;
+    bool        m_solid;    // object blocks movement
+    bool        m_collider; // object may collide with other objects
+    int         m_owner_id;
 };
 #endif

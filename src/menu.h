@@ -18,27 +18,32 @@
 #define MENU_H
 
 #include <vector>
+#include "state.h"
 #include "sprite.h"
 
-struct SDL_Renderer;
-struct SDL_Texture;
-typedef union SDL_Event SDL_Event;
-
-class Menu {
+class Menu: public State {
 public:
-    Menu();
-    ~Menu();
-
+    Menu(Game&);
     void render(SDL_Renderer* renderer);
     void onEvent(SDL_Event& ev);
     void update(float dt);
-
 private:
-    std::vector<std::string> m_items;
-    std::vector<Sprite> m_sprites;
-    Sprite m_gradient;
+    struct Button {
+        int    m_id;
+        Sprite m_label;
+        vec2i  m_pos;
+    };
+    int getButtonId(const vec2i& pos);
+    void onSelect(int);
 
     int m_current;
+    vec2i m_pos;
+    vec2i m_size;
+
+    Button m_caption;
+    Sprite m_gradient_base;
+    Sprite m_gradient_hover;
+    std::vector<Button> m_buttons;
 };
 
 #endif

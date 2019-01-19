@@ -18,78 +18,63 @@
 #include <SDL.h>
 #include <SDL_mixer.h>
 #include "game.h"
-#include "sprite.h"
-#include "object.h"
+#include "world.h"
+#include "snowball.h"
 
-class Snowball: public Object {
-public:
-    Snowball():
-        Object("Snowball"),
-        m_snowball("snowball.png", vec2i(64, 64), vec2i(32, 12), 0, 2),
-        m_explode("snowball.png",  vec2i(64, 64), vec2i(32, 12), 1, 8),
-        m_sprite(&m_snowball),
-        m_frame(0),
-        m_speed(16),
-        m_height(64),
-        m_ttl(1)
-    {
+Snowball::Snowball(World& world, const vec2f& pos, const vec2f& dir, int owner_id) :
+    Object(world, "Snowball", pos),
+    m_dir(dir),
+    m_state(SNOWBALL),
+    m_frame(0),
+    m_speed(16),
+    m_height(64),
+    m_ttl(1)
+{
+    m_sprites.resize(3);
+    m_sprites[SHADOW  ].load(m_world.getGame(), "snowball.png", vec2i(64, 64), vec2i(32, 12), 0, 1);
+    m_sprites[SNOWBALL].load(m_world.getGame(), "snowball.png", vec2i(64, 64), vec2i(32, 12), 1, 1);
+    m_sprites[EXPLODE ].load(m_world.getGame(), "snowball.png", vec2i(64, 64), vec2i(32, 12), 1, 8);
+
+    m_solid = false;
+    m_owner_id = owner_id;
+}
+
+void Snowball::render(SDL_Renderer* renderer, const vec2i& pos) {
+    if (m_state == SNOWBALL) {
+        m_sprites[SHADOW].render(renderer, vec2i(pos.x, floor(pos.y)), 0, 0);
+    }
+    m_sprites[m_state].render(renderer, vec2i(pos.x, floor(pos.y - m_height)), 0, (int)m_frame);
+}
+
+void Snowball::update(float dt) {
+    if (m_state == SNOWBALL) {
+        m_pos += m_dir * m_speed * dt;
+        m_ttl -= dt;
+        if (m_ttl < 0) {
+            m_state = EXPLODE;
+        }
+    }
+    else if (m_state == EXPLODE) {
+        m_frame += 8 * dt;
+        if (m_frame >= m_sprites[m_state].getFrames()) {
+            m_frame = 0;
+            m_alive = false;
+        }
+    }
+}
+
+void Snowball::onCollision(Object* other) {
+    // check owner so we don't get hit by own projectiles
+    if (m_state == SNOWBALL && (other == nullptr || other->getObjectId() != m_owner_id)) {
+        m_state = EXPLODE;
         m_solid = false;
-    }
+        m_collider = false;
 
-    void render(SDL_Renderer* renderer, const vec2i& pos) {
-        if (m_sprite == &m_snowball) {
-            // shadow
-            m_sprite->render(renderer, vec2i(pos.x, floor(pos.y)), 0, 0);
-            m_sprite->render(renderer, vec2i(pos.x, floor(pos.y - m_height)), 0, 1);
+        if (Mix_PlayChannel(-1, m_world.getGame().getSound("hit.ogg"), 0) < 0) {
+            throw std::runtime_error(Mix_GetError());
         }
-        else {
-            m_sprite->render(renderer, vec2i(pos.x, floor(pos.y - m_height)), 0, (int)m_frame);
+        if (other) {
+            other->onHit(this, 25);
         }
     }
-
-    void update(float dt) {
-        if (m_sprite == &m_snowball) {
-            m_pos += m_dir * m_speed * dt;
-            m_ttl -= dt;
-            if (m_ttl < 0) {
-                m_sprite = &m_explode;
-            }
-        }
-        else if (m_sprite == &m_explode) {
-            m_frame += 8 * dt;
-            if (m_frame >= m_sprite->getFrames()) {
-                m_frame = 0;
-                m_alive = false;
-            }
-        }
-    }
-
-    void onCollision(Object* other) {
-        // check owner so we don't get hit by own projectiles
-        if (m_sprite == &m_snowball && (other == nullptr || other->getObjectId() != m_owner_id)) {
-            m_sprite = &m_explode;
-            m_solid = false;
-            m_collider = false;
-
-            if (Mix_PlayChannel(-1, Game::get().getSound("hit.ogg"), 0) < 0) {
-                throw std::runtime_error(Mix_GetError());
-            }
-            if (other) {
-                other->onHit(this, 25);
-            }
-        }
-    } 
-
-private:
-    Sprite m_snowball;
-    Sprite m_explode;
-    Sprite* m_sprite;
-    float m_frame;
-    float m_speed;
-    float m_height;
-    float m_ttl;
-};
-
-static bool init = Game::get().setFactory("Snowball", []() {
-    return (Object*) new Snowball();
-});
+} 

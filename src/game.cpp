@@ -22,35 +22,17 @@
 #include <SDL_image.h>
 #include <SDL_mixer.h>
 #include <SDL_ttf.h>
-#include "vec.h"
 #include "game.h"
 #include "menu.h"
 #include "world.h"
-#include "object.h"
-#include "camera.h"
-#include "character.h"
-
-/**
- * Make application a singleton, so that we can auto-register object factories
- */
-Game& Game::get() {
-    static Game game;
-    return game;
-}
 
 Game::Game() :
     m_base_path("./"),
-    m_event_type(-1),
     m_window(nullptr),
     m_renderer(nullptr),
-    m_menu(nullptr),
-    m_world(nullptr),
-    m_player(nullptr),
-    m_camera(nullptr),
-    m_cursor(nullptr),
     m_fullScreen(true),
-    m_musicEnabled(true),
-    m_running(false) {
+    m_musicEnabled(true)
+{
 }
 
 Game::~Game() {
@@ -61,14 +43,6 @@ Game::~Game() {
  * Free resources
  */
 void Game::destroy() {
-    delete m_menu;
-    m_menu = nullptr;
-
-    delete m_world;
-    m_world = nullptr;
-    m_player = nullptr;
-    m_camera = nullptr;
-
     for (auto it : m_sounds) {
         if (it.second) Mix_FreeChunk(it.second);
     }
@@ -106,7 +80,7 @@ void Game::destroy() {
 /**
  * Parse command line arguments, init SDL, create some objects
  */
-Game& Game::init(int argc, char* argv[]) {
+void Game::init(int argc, char* argv[]) {
     // parse command line
     int opt;
     while ((opt = getopt(argc, argv, "mvw")) != -1) {
@@ -135,12 +109,7 @@ Game& Game::init(int argc, char* argv[]) {
         throw std::runtime_error(SDL_GetError());
     }
 
-    m_event_type = SDL_RegisterEvents(1);
-    if (m_event_type == ((Uint32)-1)) {
-        throw std::runtime_error("SDL_RegisterEvents failed");
-    }
-
-    if (IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG == 0) {
+    if ((IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG) == 0) {
         throw std::runtime_error(IMG_GetError());
     }
 
@@ -148,7 +117,7 @@ Game& Game::init(int argc, char* argv[]) {
         throw std::runtime_error(TTF_GetError());
     }
 
-    if (Mix_Init(MIX_INIT_OGG) & MIX_INIT_OGG == 0) {
+    if ((Mix_Init(MIX_INIT_OGG) & MIX_INIT_OGG) == 0) {
         throw std::runtime_error(Mix_GetError());
     }
 
@@ -170,6 +139,7 @@ Game& Game::init(int argc, char* argv[]) {
         throw std::runtime_error(SDL_GetError());
     }
 
+    SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_BLEND);
     SDL_RenderSetLogicalSize(m_renderer, 800, 600);
 
     // start background music
@@ -178,58 +148,28 @@ Game& Game::init(int argc, char* argv[]) {
             throw std::runtime_error(Mix_GetError());
         }
     }
-
-    m_menu = new Menu();
-
-    m_running = true;
-    return *this;
 }
 
 /**
- * Add custom user event to SDL event queue
+ * Add state to the stack
  */
-void Game::pushEvent(int code, void* data1, void* data2) {
-    SDL_Event ev;
-    SDL_zero(ev);
-    ev.type = m_event_type;
-    ev.user.code = code;
-    ev.user.data1 = data1;
-    ev.user.data2 = data2;
-    SDL_PushEvent(&ev);
-}
-
-/**
- * Show or hide a menu
- */
-void Game::toggleMenu(bool show) {
-    delete m_menu;
-    m_menu = nullptr;
-
-    if (show) {
-        m_menu = new Menu();
+void Game::pushState(int state) {
+    if (state == STATE_MENU) {
+        m_states.push_back(std::make_unique<Menu>(*this));
+    }
+    else if (state == STATE_WORLD) {
+        m_states.push_back(std::make_unique<World>(*this, SDL_GetTicks()));
     }
 }
 
 /**
- * Create a world and populate it
+ * Remove state from the stack. Revert to previous state.
  */
-void Game::createWorld() {
-    delete m_world;
-    m_world = nullptr;
-    m_cursor = nullptr;
-    m_camera = nullptr;
-    m_player = nullptr;
-
-    m_world  = new World();
-    m_cursor = m_world->spawn("Cursor", vec2f(0,0));
-    m_camera = (Camera*) m_world->spawn("Camera", vec2f(0, 0));
-    m_camera->setSize(vec2i(800, 600));
-    m_player = (Character*) m_world->spawn("Character", vec2f(0, 7));
-    m_world->spawn("CharacterAi", vec2f(-3,-5));
-    m_world->spawn("CharacterAi", vec2f(-1,-6));
-    m_world->spawn("CharacterAi", vec2f(0,-7));
-    m_world->spawn("CharacterAi", vec2f(1,-6));
-    m_world->spawn("CharacterAi", vec2f(3,-5));
+void Game::popState() {
+    if (!m_states.empty()) {
+        m_purgatory.push_back(std::move(m_states.back()));
+        m_states.pop_back();
+    }
 }
 
 /**
@@ -239,72 +179,25 @@ void Game::run() {
     Uint32 currentTime = SDL_GetTicks();
     SDL_Event ev;
 
-    while (m_running)  {
+    while (!m_states.empty())  {
         // input
         while (SDL_PollEvent(&ev) != 0) {
             if (ev.type == SDL_QUIT) {
-                m_running = false;
+                m_states.clear();
             }
-            else if (ev.type == SDL_WINDOWEVENT) {
-                switch (ev.window.event) {
-                    case SDL_WINDOWEVENT_RESIZED:
-                        float k = fmin(1.0, fmin(800.0 / ev.window.data1, 600.0 / ev.window.data2));
-                        int w = int(ev.window.data1 * k);
-                        int h = int(ev.window.data2 * k);
-                        SDL_RenderSetLogicalSize(m_renderer, w, h);
-                        if (m_camera) {
-                            m_camera->setSize(vec2i(w, h));
-                        }
-                    break;
-                }
+            else if (ev.type == SDL_WINDOWEVENT && ev.window.event ==  SDL_WINDOWEVENT_RESIZED) {
+                float k = fmin(1.0, fmin(800.0 / ev.window.data1, 600.0 / ev.window.data2));
+                int w = int(ev.window.data1 * k);
+                int h = int(ev.window.data2 * k);
+                SDL_RenderSetLogicalSize(m_renderer, w, h);
             }
-            else if (ev.type == SDL_KEYDOWN) {
-                switch (ev.key.keysym.sym) {
-                    case SDLK_f:
-                        m_fullScreen = !m_fullScreen;
-                        SDL_SetWindowFullscreen(m_window, m_fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-                    break;
-                }
-            }
-            else if (ev.type == m_event_type) {
-                switch (ev.user.code) {
-                    case EV_MENU_SELECT:
-                        int item = (int)(uintptr_t)ev.user.data2;
-                        if (item == -1) {
-                            toggleMenu(false);
-                        }
-                        else if (item == 0) {
-                            toggleMenu(false);
-                            createWorld();
-                        }
-                        else if (item == 2) {
-                            m_running = false;
-                        }
-                    break;
-                }
+            else if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_f) {
+                m_fullScreen = !m_fullScreen;
+                SDL_SetWindowFullscreen(m_window, m_fullScreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
             }
 
-            if (m_menu) {
-                m_menu->onEvent(ev);
-            }
-            else if (m_world) {
-                if (ev.type == SDL_MOUSEMOTION) {
-                    vec2f cursor = m_camera->screenToWorld(vec2i(ev.motion.x, ev.motion.y));
-                    m_cursor->setPosition(vec2f(round(cursor.x), round(cursor.y)));
-                }
-                else if (ev.type == SDL_MOUSEBUTTONUP) {
-                    if (ev.button.button == SDL_BUTTON_LEFT) {
-                        m_player->walkTo(m_camera->screenToWorld(vec2i(ev.button.x, ev.button.y)));
-                    }
-                    else if (ev.button.button == SDL_BUTTON_RIGHT) {
-                        m_player->throwAt(m_camera->screenToWorld(vec2i(ev.button.x, ev.button.y)));
-                    }
-                }
-                else if (ev.type == SDL_KEYDOWN) {
-                    if (ev.key.keysym.sym == SDLK_ESCAPE) {
-                        toggleMenu(true);
-                    }
-                }
+            if (!m_states.empty()) {
+                m_states.back()->onEvent(ev);
             }
         }
 
@@ -313,47 +206,22 @@ void Game::run() {
         currentTime = time;
 
         // update
-        if (m_menu) {
-            m_menu->update(dt);
+        if (!m_states.empty()) {
+            m_states.back()->update(dt);
         }
-        else if (m_world) {
-            m_world->update(dt);
-            m_camera->setPosition(m_player->getPosition());
-        }
-        else {
-            m_running = false;
-        }
+        m_purgatory.clear();
 
         // render
         SDL_SetRenderDrawColor(m_renderer, 0x00, 0x00, 0x00, 0xFF);
         SDL_RenderClear(m_renderer);
 
-        if (m_world) {
-            m_world->render(m_renderer, m_camera);
-        }
-        if (m_menu) {
-            m_menu->render(m_renderer);
+        for (auto& it : m_states) {
+            it->render(m_renderer);
         }
 
         SDL_RenderPresent(m_renderer);
         SDL_Delay(20);
     }
-}
-
-/**
- * Get registered constructor
- */
-Game::ObjectCtor Game::getFactory(const std::string& className) const {
-    return m_factories.at(className);
-}
-
-/**
- * Register object factory
- */
-bool Game::setFactory(const std::string& className, ObjectCtor constructor) {
-    SDL_LogDebug(SDL_LOG_CATEGORY_TEST, "Register: %s", className.c_str());
-    m_factories[className] = constructor;
-    return true;;
 }
 
 /**

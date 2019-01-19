@@ -14,22 +14,24 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef CAMERA_H
-#define CAMERA_H
+#ifndef STATE_H
+#define STATE_H
 
-#include "object.h"
+class Game;
+struct SDL_Renderer;
+struct SDL_Texture;
+typedef union SDL_Event SDL_Event;
 
-class Camera: public Object {
+class State {
 public:
-    Camera();
+    State(Game& game): m_game(game) {}
+    virtual ~State() {}
+    virtual void render(SDL_Renderer* renderer) = 0;
+    virtual void onEvent(SDL_Event& ev) = 0;
+    virtual void update(float dt) = 0;
 
-    void setSize(const vec2i& size);
-    const vec2i getSize() const;
-    const vec2i worldToScreen(const vec2f& pos) const;
-    const vec2f screenToWorld(const vec2i& pos) const;
-
-private:
-    vec2i m_size;
+protected:
+    Game& m_game;
 };
 
 #endif

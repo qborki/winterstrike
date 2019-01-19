@@ -14,17 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef _GAME_H
-#define _GAME_H
+#ifndef GAME_H
+#define GAME_H
 
 #include <string>
-#include <map>
-
-class Menu;
-class World;
-class Object;
-class Camera;
-class Character;
+#include <vector>
+#include <memory>
+#include <unordered_map>
+#include "state.h"
 
 struct SDL_Window;
 struct SDL_Renderer;
@@ -35,61 +32,47 @@ typedef struct _TTF_Font TTF_Font;
 
 class Game {
 public:
-    enum {EV_MENU_SELECT};
-
-    // singleton
-    static Game& get();
+    enum {STATE_MENU, STATE_WORLD};
 
     Game();
     ~Game();
 
-    Game& init(int argc, char* argv[]);
+    void init(int argc, char* argv[]);
     void destroy();
     void run();
 
-    inline SDL_Renderer* getRenderer() {
-        return m_renderer;
-    }
-
-    // push custom SDL event
-    void pushEvent(int code, void* data1, void* data2);
+    void pushState(int stateid);
+    void popState();
 
     // Resource manager
     SDL_Texture* getTexture(const std::string& fileName);
     TTF_Font*    getFont(const std::string& fileName, int ptsize);
     Mix_Chunk*   getSound(const std::string& fileName);
     Mix_Music*   getMusic(const std::string& fileName);
+    inline SDL_Renderer* getRenderer() {
+        return m_renderer;
+    }
 
-    // Object factory map
-    using      ObjectCtor = Object* (*)();
-    ObjectCtor getFactory(const std::string& className) const;
-    bool       setFactory(const std::string& className, ObjectCtor constructor);
-
-    void toggleMenu(bool show);
-    void createWorld();
 private:
     const std::string getDataFile(const std::string&) const;
 
     std::string m_base_path;
 
-    unsigned long m_event_type;
     SDL_Window*   m_window;
     SDL_Renderer* m_renderer;
-    std::map<std::string, SDL_Texture*> m_textures;
-    std::map<std::string, TTF_Font*>    m_fonts;
-    std::map<std::string, Mix_Chunk*>   m_sounds;
-    std::map<std::string, Mix_Music*>   m_music;
-    std::map<std::string, ObjectCtor>   m_factories;
 
-    Menu*      m_menu;
-    World*     m_world;
-    Character* m_player;
-    Camera*    m_camera;
-    Object*    m_cursor;
+    // assets cache
+    std::unordered_map<std::string, SDL_Texture*> m_textures;
+    std::unordered_map<std::string, TTF_Font*>    m_fonts;
+    std::unordered_map<std::string, Mix_Chunk*>   m_sounds;
+    std::unordered_map<std::string, Mix_Music*>   m_music;
+
+    // active states stack (all are rendered, but only top is updated and gets input)
+    std::vector<std::unique_ptr<State>> m_states;
+    std::vector<std::unique_ptr<State>> m_purgatory;
 
     bool m_fullScreen;
     bool m_musicEnabled;
-    bool m_running;
 
     // version and executable link time (set by build scripts)
     static const std::string PROJECT_NAME;

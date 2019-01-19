@@ -28,18 +28,6 @@ Sprite::Sprite() :
 {
 }
 
-Sprite::Sprite(const std::string& filename, const vec2i& size, const vec2i& offset, int start, int count) :
-    m_filename(filename),
-    m_texture(nullptr),
-    m_must_destroy(false),
-    m_size(size),
-    m_offset(offset),
-    m_start(start),
-    m_count(count)
-{
-    // TODO: queue for preloading once renderer is ready
-}
-
 Sprite::~Sprite() {
     destroy();
 }
@@ -58,11 +46,6 @@ void Sprite::destroy() {
  * Render sprite frame at specified position
  */
 void Sprite::render(SDL_Renderer* renderer, const vec2i& pos, int side, int frame, const vec2f& scale) {
-    // lazy loading
-    if (m_texture == nullptr && m_filename != "") {
-        createFromFile(renderer, m_filename);
-    }
-
     if (m_texture != nullptr) {
         SDL_Rect dst = {
             x: int(pos.x - m_offset.x * scale.x),
@@ -86,12 +69,12 @@ void Sprite::render(SDL_Renderer* renderer, const vec2i& pos, int side, int fram
 /**
  * Get cached texture from resource manager
  */
-void Sprite::createFromFile(SDL_Renderer* renderer, const std::string& filename) {
+void Sprite::load(Game& game, const std::string& filename, const vec2i& size, const vec2i& offset, int start, int count) {
     int w, h;
 
     destroy();
 
-    m_texture = Game::get().getTexture(filename);
+    m_texture = game.getTexture(filename);
     m_must_destroy = false;
 
     if (SDL_SetTextureBlendMode(m_texture, SDL_BLENDMODE_BLEND) < 0) {
@@ -101,15 +84,19 @@ void Sprite::createFromFile(SDL_Renderer* renderer, const std::string& filename)
         throw std::runtime_error(SDL_GetError());
     }
 
-    m_cols = w / m_size.x;
-    m_rows = h / m_size.y;
+    m_size   = size;
+    m_offset = offset;
+    m_cols   = w / m_size.x;
+    m_rows   = h / m_size.y;
+    m_start  = start;
+    m_count  = count;
 }
 
 /**
  * Create a new texture and render some text on it
  */
-void Sprite::createFromText(SDL_Renderer* renderer, const std::string& text, const std::string& fontname, int ptsize, int rgba) {
-    TTF_Font* font = Game::get().getFont(fontname, ptsize);
+void Sprite::text(Game& game, const std::string& text, const std::string& fontname, int ptsize, int rgba) {
+    TTF_Font* font = game.getFont(fontname, ptsize);
     SDL_Surface* surface;
     SDL_Color color = {Uint8(rgba >> 24 & 0xff), Uint8((rgba >> 16) & 0xff), Uint8((rgba >> 8) & 0xff)};
 
@@ -119,7 +106,7 @@ void Sprite::createFromText(SDL_Renderer* renderer, const std::string& text, con
         throw std::runtime_error(TTF_GetError());
     }
     else {
-        if ((m_texture = SDL_CreateTextureFromSurface(renderer, surface)) == nullptr) {
+        if ((m_texture = SDL_CreateTextureFromSurface(game.getRenderer(), surface)) == nullptr) {
             SDL_FreeSurface(surface);
             throw std::runtime_error(SDL_GetError());
         }
@@ -136,10 +123,10 @@ void Sprite::createFromText(SDL_Renderer* renderer, const std::string& text, con
     }
 }
 
-void Sprite::createFromVGradient(SDL_Renderer* renderer, int w, int h, int rgba0, int rgba1) {
+void Sprite::grad(Game& game, const vec2i& size, int rgba0, int rgba1) {
     SDL_Surface* surface;
 
-    if ((surface = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PIXELFORMAT_RGBA32)) == nullptr) {
+    if ((surface = SDL_CreateRGBSurfaceWithFormat(0, size.x, size.y, 32, SDL_PIXELFORMAT_RGBA32)) == nullptr) {
         SDL_FreeSurface(surface);
         throw std::runtime_error(SDL_GetError());
     }
@@ -157,11 +144,11 @@ void Sprite::createFromVGradient(SDL_Renderer* renderer, int w, int h, int rgba0
                 Uint8(ag + (bg - ag) * i / surface->h),
                 Uint8(ab + (bb - ab) * i / surface->h)
             };
-            SDL_Rect rect = {0, i, surface->w, i};
+            SDL_Rect rect = {0, i, surface->w, 1};
             SDL_FillRect(surface, &rect, SDL_MapRGB(surface->format, rgb.r, rgb.g, rgb.b));
         } 
 
-        if ((m_texture = SDL_CreateTextureFromSurface(renderer, surface)) == nullptr) {
+        if ((m_texture = SDL_CreateTextureFromSurface(game.getRenderer(), surface)) == nullptr) {
             SDL_FreeSurface(surface);
             throw std::runtime_error(SDL_GetError());
         }

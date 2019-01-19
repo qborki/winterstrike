@@ -14,28 +14,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <SDL.h>
-#include "game.h"
+#ifndef SNOWBALL_H
+#define SNOWBALL_H
+
+#include <vector>
 #include "object.h"
+#include "sprite.h"
 
-class Cursor: public Object {
+class Snowball: public Object {
 public:
-    Cursor(): Object("Cursor"), m_rgba(0x80ff80ff) {
-        m_collider = false;
-        m_solid = false;
-        m_z = 1;
-    }
+    enum { SHADOW, SNOWBALL, EXPLODE };
 
-    void render(SDL_Renderer* renderer, const vec2i& pos) {
-        SDL_Point points[] = {{pos.x, pos.y + 16}, {pos.x - 32, pos.y}, {pos.x, pos.y - 16}, {pos.x + 32, pos.y}, {pos.x, pos.y + 16}};
-        SDL_SetRenderDrawColor(renderer, Uint8(m_rgba >> 24 & 0xff), Uint8((m_rgba >> 16) & 0xff), Uint8( (m_rgba >> 8) & 0xff), Uint8(m_rgba & 0xff));
-        SDL_RenderDrawLines(renderer, points, sizeof(points) / sizeof(points[0]));
-    }
+    Snowball(World& world, const vec2f& pos, const vec2f& dir, int owner);
 
+    void render(SDL_Renderer* renderer, const vec2i& pos);
+    void update(float dt);
+
+    void onCollision(Object* other);
 private:
-    int m_rgba;
-};
+    vec2f m_dir;
+    int   m_state;
+    float m_frame;
+    float m_speed;
+    float m_height;
+    float m_ttl;
 
-static bool init = Game::get().setFactory("Cursor", []() {
-    return (Object*) new Cursor();
-});
+    std::vector<Sprite> m_sprites;
+};
+#endif

@@ -18,7 +18,10 @@
 #include "game.h"
 
 int main(int argc, char** argv) try {
-    Game::get().init(argc, argv).run();
+    Game game;
+    game.init(argc, argv);
+    game.pushState(Game::STATE_MENU);
+    game.run();
     return 0;
 }
 catch (std::exception& e) {

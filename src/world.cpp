@@ -14,69 +14,57 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#include <stdexcept>
 #include <algorithm>
-#include <list>
 #include <queue>
-#include <map>
+#include <unordered_map>
 #include <SDL.h>
 #include "game.h"
 #include "world.h"
 #include "object.h"
-#include "camera.h"
+#include "character.h"
 
-World::World() :
-    m_sprites({
-        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 0, 1),
-        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 1, 1),
-        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 2, 1),
-        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 3, 1),
-        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 4, 1),
-        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 5, 1),
-        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 6, 1),
-        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 7, 1),
-        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 8, 1),
-        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 9, 1),
-        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 10, 1),
-        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 11, 1),
-        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 12, 1),
-        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 13, 1),
-        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 14, 1),
-        Sprite("tiles.png", vec2i(64, 128),  vec2i(32, 112), 15, 1),
-        Sprite("trees.png", vec2i(128, 192), vec2i(64, 160), 0, 1)
-    })
+World::World(Game& game, int seed) :
+    State(game),
+    m_seed(seed)
 {
-}
+    SDL_RenderGetLogicalSize(m_game.getRenderer(), &m_viewport.x, &m_viewport.y);
 
-World::~World() {
-    for (auto it : m_objects) {
-        delete it;
-    }
-    m_objects.clear();
-}
+    m_sprites.resize(17);
+    m_sprites[0 ].load(m_game, "tiles.png", vec2i(64, 128),  vec2i(32, 112), 0, 1);
+    m_sprites[1 ].load(m_game, "tiles.png", vec2i(64, 128),  vec2i(32, 112), 1, 1);
+    m_sprites[2 ].load(m_game, "tiles.png", vec2i(64, 128),  vec2i(32, 112), 2, 1);
+    m_sprites[3 ].load(m_game, "tiles.png", vec2i(64, 128),  vec2i(32, 112), 3, 1);
+    m_sprites[4 ].load(m_game, "tiles.png", vec2i(64, 128),  vec2i(32, 112), 4, 1);
+    m_sprites[5 ].load(m_game, "tiles.png", vec2i(64, 128),  vec2i(32, 112), 5, 1);
+    m_sprites[6 ].load(m_game, "tiles.png", vec2i(64, 128),  vec2i(32, 112), 6, 1);
+    m_sprites[7 ].load(m_game, "tiles.png", vec2i(64, 128),  vec2i(32, 112), 7, 1);
+    m_sprites[8 ].load(m_game, "tiles.png", vec2i(64, 128),  vec2i(32, 112), 8, 1);
+    m_sprites[9 ].load(m_game, "tiles.png", vec2i(64, 128),  vec2i(32, 112), 9, 1);
+    m_sprites[10].load(m_game, "tiles.png", vec2i(64, 128),  vec2i(32, 112), 10, 1);
+    m_sprites[11].load(m_game, "tiles.png", vec2i(64, 128),  vec2i(32, 112), 11, 1);
+    m_sprites[12].load(m_game, "tiles.png", vec2i(64, 128),  vec2i(32, 112), 12, 1);
+    m_sprites[13].load(m_game, "tiles.png", vec2i(64, 128),  vec2i(32, 112), 13, 1);
+    m_sprites[14].load(m_game, "tiles.png", vec2i(64, 128),  vec2i(32, 112), 14, 1);
+    m_sprites[15].load(m_game, "tiles.png", vec2i(64, 128),  vec2i(32, 112), 15, 1);
+    m_sprites[16].load(m_game, "trees.png", vec2i(128, 192), vec2i(64, 160), 0, 1);
 
-/**
- * Consistent noise generator for coordinates
- */
-static int hash (int a1, int a2, int a3) {
-    int seed = (( a1 + a2) * (a1 + a2 + 1)) / 2 + a2;
-    seed = (( seed + a3) * (seed + a3 + 1)) / 2 + a3;
 
-    seed = ((seed >> 16) ^ seed) * 0x45d9f3b;
-    seed = ((seed >> 16) ^ seed) * 0x45d9f3b;
-    seed = (seed >> 16) ^ seed;
-    return seed;
+    add(std::make_unique<Character>(*this, vec2f(0, 6), false));
+    m_player = static_cast<Character*>(m_objects.back().get());
+
+    add(std::make_unique<Character>(*this, vec2f(-3,-5), true));
+    add(std::make_unique<Character>(*this, vec2f(-1,-6), true));
+    add(std::make_unique<Character>(*this, vec2f( 0,-7), true));
+    add(std::make_unique<Character>(*this, vec2f( 1,-6), true));
+    add(std::make_unique<Character>(*this, vec2f( 3,-5), true));
 }
 
 /**
  * Get vertex height. Each vertex is shared by eight tiles.
  */
-static int heightmap(int x, int y) {
-    x = abs(x);
-    y = abs(y);
-
+int World::getVertexZ(const vec2i& pos) {
     // flat central area
-    if (x < 8 && y < 8) {
+    if (pos.x >= -8 && pos.y >= -8 && pos.x <= 8 && pos.y <= 8) {
         return 0;
     }
 
@@ -84,32 +72,34 @@ static int heightmap(int x, int y) {
     static const vec2i steps[] = {{0, 0}, {0, -1}, {-1, 0}, {+1, 0}, {0, +1}, {-1, -1}, {+1, -1}, {-1, +1}, {+1, +1}};
     int result = 1;
     for (auto step : steps) {
-        result = result && hash(x + step.x, y + step.y, 20) % 6;
+        result = result && std::hash<vec2i>()(pos + step, m_seed) % 6;
     }
     return result;
 }
 
 /**
- * get correct wall tile
+ * get correct wall tile index
  */
-static int wall(int x, int y) {
-    return heightmap(x + 1, y + 0)
-      | heightmap(x + 0, y + 0) << 1
-      | heightmap(x + 1, y + 1) << 2
-      | heightmap(x + 0, y + 1) << 3;
+int World::getWallSpriteId(const vec2i& pos) {
+    return
+        getVertexZ(pos + vec2i(1, 0))
+      | getVertexZ(pos + vec2i(0, 0)) << 1
+      | getVertexZ(pos + vec2i(1, 1)) << 2
+      | getVertexZ(pos + vec2i(0, 1)) << 3;
 }
 
 /**
  * Procedural map generation
  */
-void World::Tile::generate(int x, int y) {
-    int a = wall(x, y);;
+void World::generate(Tile& tile, const vec2i& pos) {
+    int a = getWallSpriteId(pos);
 
-    // if not a wall place some obstacles
+    // if not a getWallSpriteId place some obstacles
     if (a == 0) {
-        a = hash(abs(x), abs(y), 21) % 40;
+        a = std::hash<vec2i>()(pos, m_seed) % 40;
 
-        if (a < 1 && wall(x - 1, y + 1) == 0 && wall(x + 1, y - 1) == 0) {
+        // add a tree if there is enough space
+        if (a < 1 && getWallSpriteId(pos + vec2i(-1, 1)) == 0 && getWallSpriteId(pos + vec2i(1, -1)) == 0) {
             a = 16 + a;
         }
         else {
@@ -117,12 +107,15 @@ void World::Tile::generate(int x, int y) {
         }
     }
 
-    m_layers[0] = 0;
-    m_layers[1] = -1;
-    m_layers[2] = a;
-    m_passable = (a == -1);
+    tile.m_layers[0] = 0;
+    tile.m_layers[1] = -1;
+    tile.m_layers[2] = a;
+    tile.m_passable = (a == -1);
 }
 
+/**
+ * Get or generate a tile at specified map coordinates
+ */
 World::Tile& World::getTile(const vec2i& pos) {
     vec2i local_pos = (pos % Chunk::SIZE + vec2i(Chunk::SIZE, Chunk::SIZE)) % Chunk::SIZE;
     vec2i chunk_pos = pos - local_pos;
@@ -134,7 +127,7 @@ World::Tile& World::getTile(const vec2i& pos) {
 
         for (int x = 0; x < Chunk::SIZE; ++x) {
             for (int y = 0; y < Chunk::SIZE; ++y) {
-                chunk.m_tiles[x][y].generate(chunk_pos.x + x, chunk_pos.y + y);
+                generate(chunk.m_tiles[x][y], chunk_pos + vec2i(x, y));
             }
         }
     }
@@ -151,21 +144,24 @@ bool World::isPassable(const vec2i& pos) {
 }
 
 /**
- * Find objects near position. (All hail C++11 vector move semantics!)
+ * Find objects near position.
  */
 std::vector<Object*> World::getObjectsInRadius(const vec2f& pos, float radius) {
     std::vector<Object*> result;
-    std::copy_if(m_objects.begin(), m_objects.end(), std::back_inserter(result), [pos, radius](Object* object){
-        return (pos - object->getPosition()).length() < radius;
-    });
+
+    for (auto& object : m_objects) {
+        if ((pos - object->getPosition()).length() < radius) {
+            result.push_back(object.get());
+        }
+    }
     return result;
 }
 
 /**
  * Debug render tile
  */
-void World::renderMarker(SDL_Renderer* renderer, Camera* camera, const vec2f& pos, unsigned rgba) {
-    vec2i v = camera->worldToScreen(pos);
+void World::renderMarker(SDL_Renderer* renderer, const vec2f& pos, unsigned rgba) {
+    vec2i v = worldToScreen(pos);
     SDL_Point points[] = {{v.x, v.y + 16}, {v.x - 32, v.y}, {v.x, v.y - 16}, {v.x + 32, v.y}, {v.x, v.y + 16}};
 
     SDL_SetRenderDrawColor(renderer, Uint8(rgba >> 24 & 0xff), Uint8((rgba >> 16) & 0xff), Uint8( (rgba >> 8) & 0xff), Uint8(rgba & 0xff));
@@ -173,11 +169,27 @@ void World::renderMarker(SDL_Renderer* renderer, Camera* camera, const vec2f& po
 }
 
 /**
+ * Convert world grid coordinates to screen pixel coordinates
+ */
+const vec2i World::worldToScreen(const vec2f& pos) const {
+    vec2f v = (pos - m_camera) * 64;
+    return vec2i(std::round((v.x - v.y) / 2), std::round((v.x + v.y) / 4)) + m_viewport / 2;
+}
+
+/**
+ * Convert screen pixel coordinates to world grid coordinates
+ */
+const vec2f World::screenToWorld(const vec2i& pos) const {
+    vec2i v = pos - m_viewport / 2;
+    return vec2f(2.0 * v.y + v.x, 2.0 * v.y - v.x) / 64 + m_camera;
+}
+
+/**
  * Main rendering function. Draw world and its objects.
  */
-void World::render(SDL_Renderer* renderer, Camera* camera) {
-    vec2f lt = camera->screenToWorld(vec2i() - m_sprites[16].getOffset()),
-          rb = camera->screenToWorld(camera->getSize() + m_sprites[16].getOffset());
+void World::render(SDL_Renderer* renderer) {
+    vec2f lt = screenToWorld(vec2i() - m_sprites[16].getOffset()),
+          rb = screenToWorld(m_viewport + m_sprites[16].getOffset());
 
     lt.x = floor(lt.x);
     lt.y = floor(lt.y);
@@ -195,98 +207,94 @@ void World::render(SDL_Renderer* renderer, Camera* camera) {
                 Tile& tile = getTile(vec2i(pos));
 
                 if (tile.m_layers[z] >= 0) {
-                    m_sprites[tile.m_layers[z]].render(renderer, camera->worldToScreen(pos), 0, 0);
+                    m_sprites[tile.m_layers[z]].render(renderer, worldToScreen(pos), 0, 0);
                 }
 
                 pos += vec2f(1, -1);
             }
 
-            for (auto it : m_objects) {
+            for (auto& it : m_objects) {
                 vec2f objpos = it->getPosition();
 
-                if (it->getZ() == z && (int)round(objpos.x + objpos.y) == (int)(pos.x + pos.y)) {
-                    it->render(renderer, camera->worldToScreen(objpos));
+                if (it->getZ() == z && (int)std::round(objpos.x + objpos.y) == (int)(pos.x + pos.y)) {
+                    it->render(renderer, worldToScreen(objpos));
                 }
             }
 
             pos += vec2f(-cx, cx);
             pos += a % 2 ? vec2f(1, 0) : vec2f(0, 1);
         }
+
+        if (z == 1) {
+            renderMarker(renderer, screenToWorld(m_cursor).round<float>(), 0x80ff80ff);
+        }
     }
 
-    for (auto it : m_objects) {
+    for (auto& it : m_objects) {
         if (it->getZ() >= Tile::LAYERS) {
-            it->render(renderer, camera->worldToScreen(it->getPosition()));
+            it->render(renderer, worldToScreen(it->getPosition()));
         }
     }
 }
 
 /**
- * Create object and link it to this world
+ * Add object to the world
  */
-Object* World::spawn(const std::string& className, const vec2f& pos) {
-    Object* o = Game::get().getFactory(className)();
-
-    m_objects.push_back(o);
-
-    o->setWorld(this);
-    o->setPosition(pos);
-
-    return o;
+void World::add(std::unique_ptr<Object> object) {
+    m_objects.push_back(std::move(object));
 }
 
 /**
  * Move and update objects
  */
 void World::update(float dt) {
+    m_camera = m_player->getPosition();
+
     // movement and collision detection
-    for (auto object : m_objects) {
+    for (size_t i = 0; i < m_objects.size(); ++i) {
+        Object& object = *m_objects[i];
+
         // backup position
-        vec2f backup_pos = object->getPosition();
+        vec2f backup_pos = object.getPosition();
 
         // update and move object
-        object->update(dt);
+        object.update(dt);
 
         // check for collisions
-        if (object->isSolid() || object->isCollider()) {
-            vec2f fpos = object->getPosition();
-            vec2i ipos(round(fpos.x), round(fpos.y));
+        if (object.isSolid() || object.isCollider()) {
+            vec2i ipos = object.getPosition().round<int>();
             if (!isPassable(ipos)) {
                 // restore position
-                if (object->isSolid()) {
-                    object->setPosition(backup_pos);
+                if (object.isSolid()) {
+                    object.setPosition(backup_pos);
                 }
                 // notify collision with world
-                if (object->isCollider()) {
-                    object->onCollision(nullptr);
+                if (object.isCollider()) {
+                    object.onCollision(nullptr);
                 }
             }
 
-            for (auto other : m_objects) {
-                if (object == other) {
+            for (size_t j = 0; j < m_objects.size(); ++j) {
+                if (i == j) {
                     continue;
                 }
-
-                bool solid = object->isSolid() && other->isSolid();
-                bool collider = object->isCollider() && other->isCollider();
+                Object& other = *m_objects[j];
+                bool solid = object.isSolid() && other.isSolid();
+                bool collider = object.isCollider() && other.isCollider();
 
                 if (!solid && !collider) {
                     continue;
                 }
 
-                vec2f other_pos = other->getPosition();
-                vec2i other_ipos = vec2i(round(other_pos.x), round(other_pos.y));
-                // vec2f delta = object->getPosition() - other->getPosition();
-
-                if (ipos == other_ipos) {
+                if ((object.getPosition() - other.getPosition()).squareLength() <= 0.5) {
                     // restore position
                     if (solid) {
-                        object->setPosition(backup_pos);
+                        object.setPosition(backup_pos);
                     }
                     // notify collision
                     if (collider) {
-                        object->onCollision(other);
-                        other->onCollision(object);
+                        object.onCollision(&other);
+                        other.onCollision(&object);
                     }
                 }
             }
@@ -294,29 +302,27 @@ void World::update(float dt) {
     }
 
     // remove dead
-    auto it = m_objects.begin();
-    while (it != m_objects.end()) {
-        if ((*it)->isAlive()) {
-            ++it;
-        }
-        else {
-            delete *it;
-            it = m_objects.erase(it);
-        }
-    }
+    m_objects.erase(std::remove_if(m_objects.begin(), m_objects.end(), [](const auto& o) { return !o->isAlive(); }), m_objects.end());
 
     // do z-sorting (FIXME: move to render?)
-    std::sort(m_objects.begin(), m_objects.end(), [] (const Object* a, const Object* b) {
+    std::sort(m_objects.begin(), m_objects.end(), [](const auto& a, const auto& b) {
         vec2f posa = a->getPosition(), posb = b->getPosition();
         int  za = a->getZ(), zb = b->getZ();
 
-        return za < zb || za == zb && posa.x + posa.y < posb.x + posb.y;
+        return (za < zb) || ((za == zb) && (posa.x + posa.y) < (posb.x + posb.y));
     });
 }
 
+/**
+ * 8-direction move cost heuristic
+ */
+static inline int octile_heuristic(const vec2i& v) {
+    int dx = std::abs(v.x), dy = std::abs(v.y);
+    return (dx > dy) ? (1000 * dx + 414 * dy) : (1000 * dy + 414 * dx);
+}
 
 /**
- * A-star pathfinding with diagonal heuristic
+ * A-star pathfinding
  */
 std::vector<vec2f> World::buildPath(const vec2f& fstart, const vec2f& fgoal) {
     static const vec2i steps[] = {{0, -1}, {-1, 0}, {+1, 0}, {0, +1}, {-1, -1}, {+1, -1}, {-1, +1}, {+1, +1}};
@@ -337,17 +343,17 @@ std::vector<vec2f> World::buildPath(const vec2f& fstart, const vec2f& fgoal) {
         int   heuristic;
     };
 
-    std::map<vec2i, Node> m_nodes;
+    std::unordered_map<vec2i, Node> m_nodes;
     Node::PrioQ m_queue;
 
-    vec2i start(round(fstart.x), round(fstart.y));
-    vec2i goal(round(fgoal.x), round(fgoal.y));
+    vec2i start = fstart.round<int>();
+    vec2i goal = fgoal.round<int>();
 
     Node* cur = &m_nodes[start];
     cur->idx = start;
     cur->parent = nullptr;
     cur->actual = 0;
-    cur->heuristic = std::numeric_limits<int>::max();
+    cur->heuristic = octile_heuristic(start - goal);
 
     m_queue.push(cur);
 
@@ -361,6 +367,8 @@ std::vector<vec2f> World::buildPath(const vec2f& fstart, const vec2f& fgoal) {
         for (int i = 0; i < 8; ++i) {
             vec2i idx = cur->idx + steps[i];
             bool passable = isPassable(idx);
+
+            // allow diagonal movement only if adjacent tiles are passable
             if (i > 3) {
                 passable = passable && isPassable(cur->idx + vec2i(steps[i].x, 0));
                 passable = passable && isPassable(cur->idx + vec2i(0, steps[i].y));
@@ -374,7 +382,7 @@ std::vector<vec2f> World::buildPath(const vec2f& fstart, const vec2f& fgoal) {
                     next->idx = idx;
                     next->parent = cur;
                     next->actual = actual;
-                    next->heuristic = 1000 * std::max(std::abs(idx.x - goal.x), std::abs(idx.y - goal.y));
+                    next->heuristic = octile_heuristic(idx - goal);
 
                     m_queue.push(next);
                 }
@@ -385,7 +393,7 @@ std::vector<vec2f> World::buildPath(const vec2f& fstart, const vec2f& fgoal) {
     // if we couldn't reach the goal, build path to the closest node instead
     if (cur->idx != goal) {
         for (auto& it : m_nodes) {
-            if (it.second.heuristic < cur->heuristic) {
+            if ((it.second.heuristic < cur->heuristic) || ((it.second.heuristic == cur->heuristic) && (it.second.actual < cur->actual))) {
                 cur = &it.second;
             }
         }
@@ -400,16 +408,14 @@ std::vector<vec2f> World::buildPath(const vec2f& fstart, const vec2f& fgoal) {
 
 /**
  * Check if line from origin to target is blocked.
- *
- * "A Fast Voxel Traversal Algorithm for Ray Tracing" (Amanatides and Woo)
  */
 bool World::checkVisible(const vec2f& forigin, const vec2f& ftarget) {
-    vec2i cursor(round(forigin.x), round(forigin.y));
-    vec2i target(round(ftarget.x), round(ftarget.y));
+    vec2i cursor = forigin.round<int>();
+    vec2i target = ftarget.round<int>();
     vec2f ray = ftarget - forigin;
     ray.normalize();
 
-    int steps = abs(target.x - cursor.x) + abs(target.y - cursor.y);
+    int steps = std::abs(target.x - cursor.x) + std::abs(target.y - cursor.y);
     int stepX = (ray.x >= 0) ? 1 : -1;
     int stepY = (ray.y >= 0) ? 1 : -1;
     float tMaxX, tMaxY, tDeltaX, tDeltaY;
@@ -441,4 +447,25 @@ bool World::checkVisible(const vec2f& forigin, const vec2f& ftarget) {
     }
 
     return true;
+}
+
+/**
+ * Handle user input for playing state
+ */
+void World::onEvent(SDL_Event& ev) {
+    if (ev.type == SDL_MOUSEMOTION) {
+        m_cursor = vec2i(ev.motion.x, ev.motion.y);
+    }
+    else if (ev.type == SDL_MOUSEBUTTONUP && ev.button.button == SDL_BUTTON_LEFT) {
+        m_player->walkTo(screenToWorld(vec2i(ev.button.x, ev.button.y)));
+    }
+    else if (ev.type == SDL_MOUSEBUTTONUP && ev.button.button == SDL_BUTTON_RIGHT) {
+        m_player->throwAt(screenToWorld(vec2i(ev.button.x, ev.button.y)));
+    }
+    else if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_ESCAPE) {
+        m_game.pushState(Game::STATE_MENU);
+    }
+    else if (ev.type == SDL_WINDOWEVENT && ev.window.event == SDL_WINDOWEVENT_RESIZED) {
+        SDL_RenderGetLogicalSize(m_game.getRenderer(), &m_viewport.x, &m_viewport.y);
+    }
 }

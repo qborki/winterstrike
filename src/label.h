@@ -22,20 +22,15 @@
 
 class Label: public Object {
 public:
-    Label();
+    Label(World& world, const vec2f& pos, const std::string& text, unsigned size, unsigned rgva, float ttl = 1);
 
     void render(SDL_Renderer* renderer, const vec2i& pos);
     void update(float dt);
-    void setText(const std::string& text);
-    void setSize(unsigned ptsize);
-    void setColor(unsigned rgba);
-
 private:
-    std::string m_text;
-    unsigned m_size;
-    unsigned m_rgba;
-    Sprite m_sprite;
+    float m_age;
     float m_ttl;
+    float m_factor;
+    Sprite m_sprite;
 };
 #endif
 

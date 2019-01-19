@@ -28,18 +28,20 @@ template <typename T> struct vec2 {
         return x== 0 && y == 0;
     }
 
+    inline const T squareLength() const {
+        return (T)(x * x + y * y);
+    }
+
     inline const T length() const {
         return (T)hypot(x, y);
     }
 
-    inline const T normalize() {
+    inline const void normalize() {
         const T len = length();
-        if (len == (T)0 || len ==(T)1)
-            return len;
-
-        x /= len;
-        y /= len;
-        return len;
+        if (len != (T)0 && len !=(T)1) {
+            x /= len;
+            y /= len;
+        }
     }
 
     inline const bool operator==(const vec2<T> &other) const {
@@ -48,13 +50,6 @@ template <typename T> struct vec2 {
 
     inline const bool operator!=(const vec2<T> &other) const {
         return x != other.x || y != other.y;
-    }
-
-    inline const bool operator<(const vec2<T> &other) const {
-        if (y != other.y) {
-            return y < other.y;
-        }
-        return x < other.x;
     }
 
     inline const vec2<T>& operator+=(const vec2<T>& other) {
@@ -83,6 +78,10 @@ template <typename T> struct vec2 {
         return *this;
     }
 
+    template <typename T2 = T>
+    inline const vec2<T2> round() const {
+        return vec2<T2>((T2)std::round(x), (T2)std::round(y));
+    }
     template <typename T2>
     inline explicit operator vec2<T2>() const {
         return vec2<T2>((T2)x, (T2)y);
@@ -106,6 +105,24 @@ template <typename T> struct vec2 {
         return vec2<T>(x % other, y % other);
     }
 };
+
+// allow vec2 to be used as key in unordered_map
+namespace std {
+	template<typename T>
+	struct hash<vec2<T>> {
+		inline void hash_combine(size_t &seed, size_t hash) const {
+			hash += 0x9e3779b9 + (seed << 6) + (seed >> 2);
+			seed ^= hash;
+		}
+
+		inline size_t operator()(vec2<T> const& v, size_t seed = 0) const {
+			hash<T> hasher;
+			hash_combine(seed, hasher(v.x));
+			hash_combine(seed, hasher(v.y));
+			return seed;
+		}
+	};
+}
 
 using vec2i = vec2<int>;
 using vec2f = vec2<float>;
