@@ -25,7 +25,7 @@ Label::Label(World& world, const vec2f& pos, const std::string& text, unsigned s
 {
     m_solid = false;
     m_collider = false;
-    m_sprite.text(m_world.getGame(), text, "LinBiolinum_Rah.ttf", size, rgba);
+    m_sprite.text(m_world.getGame(), text, "BebasNeue.otf", size, rgba);
 }
 
 

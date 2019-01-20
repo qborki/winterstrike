@@ -31,12 +31,12 @@ Menu::Menu(Game& game) :
     for (size_t i = 0; i < options.size(); ++i) {
         m_buttons[i].m_id = i;
         m_buttons[i].m_pos = m_pos + vec2i(0, (m_size.y + 16) * i);
-        m_buttons[i].m_label.text(m_game, options[i], "LinBiolinum_Rah.ttf", 32, 0x804040ff);
+        m_buttons[i].m_label.text(m_game, options[i], "BebasNeue.otf", 32, 0xa0a0a0ff);
     }
 
     m_gradient_base.grad(m_game, m_size, 0x404080ff, 0x202040ff);
     m_gradient_hover.grad(m_game, m_size, 0x6060f0ff, 0x404080ff);
-    m_caption.m_label.text(m_game, "Winter-Strike", "LinBiolinum_Rah.ttf", 96, 0x404080ff);
+    m_caption.m_label.text(m_game, "Winter-Strike", "BebasNeue.otf", 96, 0x404080ff);
     m_caption.m_pos = m_pos - vec2i(0, 96);
 }
 

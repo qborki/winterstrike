@@ -248,8 +248,6 @@ void World::add(std::unique_ptr<Object> object) {
  * Move and update objects
  */
 void World::update(float dt) {
-    m_camera = m_player->getPosition();
-
     // movement and collision detection
     for (size_t i = 0; i < m_objects.size(); ++i) {
         Object& object = *m_objects[i];
@@ -300,6 +298,8 @@ void World::update(float dt) {
             }
         }
     }
+
+    m_camera = m_player->getPosition();
 
     // remove dead
     m_objects.erase(std::remove_if(m_objects.begin(), m_objects.end(), [](const auto& o) { return !o->isAlive(); }), m_objects.end());
@@ -355,12 +355,20 @@ std::vector<vec2f> World::buildPath(const vec2f& fstart, const vec2f& fgoal) {
     cur->actual = 0;
     cur->heuristic = octile_heuristic(start - goal);
 
+    Node* best = cur;
+
     m_queue.push(cur);
 
     while (!m_queue.empty() && m_queue.size() < 50) {
         cur = m_queue.top();
+
         if (cur->idx == goal) {
+            best = cur;
             break;
+        }
+        // remember node closest to the goal in case we can't reach it
+        if ((cur->heuristic < best->heuristic) || ((cur->heuristic == best->heuristic) && (cur->actual < best->actual))) {
+            best = cur;
         }
         m_queue.pop();
 
@@ -390,17 +398,8 @@ std::vector<vec2f> World::buildPath(const vec2f& fstart, const vec2f& fgoal) {
         }
     }
 
-    // if we couldn't reach the goal, build path to the closest node instead
-    if (cur->idx != goal) {
-        for (auto& it : m_nodes) {
-            if ((it.second.heuristic < cur->heuristic) || ((it.second.heuristic == cur->heuristic) && (it.second.actual < cur->actual))) {
-                cur = &it.second;
-            }
-        }
-    }
-
     std::vector<vec2f> path;
-    for (; cur && cur->idx != start; cur = cur->parent) {
+    for (cur = best; cur && cur->idx != start; cur = cur->parent) {
         path.push_back((vec2f)(cur->idx));
     }
     return path;

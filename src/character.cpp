@@ -97,7 +97,7 @@ void Character::update(float dt) {
        bool attack = false;
    
        // attack someone
-       if (std::rand() % 2) {
+       if (std::rand() % 4) {
            std::vector<Object*> objects(m_world.getObjectsInRadius(m_pos, 16));
            std::random_shuffle(objects.begin(), objects.end());
    
