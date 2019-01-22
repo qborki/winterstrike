@@ -44,6 +44,7 @@ add_executable(${PROJECT_NAME}
     src/snowball.cpp
     src/label.cpp
     ${CMAKE_BINARY_DIR}/src/version.cpp
+    src/res.rc
 )
 
 target_link_libraries(${PROJECT_NAME}
